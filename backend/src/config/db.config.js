@@ -6,11 +6,11 @@ exports.ConnectDB = async () => {
   family: 4
 })
 
-        console.log("Database connected successfully")
+        console.log("Database connected successfully with host:", mongoose.connection.host)
     }
     catch (error){
         mongoose.disconnect()
-        process.exit(1)
+        console.error("Database connection failed", error.message)
     }
 
 }

@@ -15,5 +15,4 @@ app.use("", (req, res, next) => {
     next(new ApiError(404, "not found") )
 })
 app.use(NotFoundError)
-
 module.exports = app
