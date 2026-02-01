@@ -4,6 +4,8 @@ const ApiError = require('./utils/ApiError')
 const app = express()
 
 
+app.use(express.json())
+
 app.use("/api/v1", require('./router'))
 
 app.get('/', (req, res) => {
