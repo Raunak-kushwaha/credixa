@@ -3,6 +3,9 @@ const NotFoundError = require('./middleware/404Handling')
 const ApiError = require('./utils/ApiError')
 const app = express()
 const morgan = require('morgan')
+const cors = require('cors')
+
+app.use(cors())
 
 app.use(express.json())
 app.use(morgan('dev'))
