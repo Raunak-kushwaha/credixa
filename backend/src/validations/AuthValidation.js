@@ -1,7 +1,7 @@
 const { body } = require("express-validator")
 
 class AuthValidation {
-    static LoginUser=[
+    static loginUser=[
         body('email').notEmpty().withMessage('Email is required').isEmail().withMessage('Valid email is required').toLowerCase(),
         body('password').notEmpty().withMessage('Password is required').isLength({min:6}).withMessage('Password must be at least 6 characters long')
     ]

@@ -1,6 +1,8 @@
 const { Usermodel } = require("../models/User.model");
 const ApiError = require("../utils/ApiError");
-const bcrypt = require('bcryptjs')
+const bcrypt = require('bcryptjs');
+const JWTService = require("../utils/JwtService");
+const { check } = require("express-validator");
 class AuthService{
     static async loginUser(body){
         const {email, password} = body
@@ -12,9 +14,11 @@ class AuthService{
         if (!isMatch){
             throw new ApiError(400, "Invalid password")
         }
+
+        const token = JWTService.generateToken(check_exist._id)
         return {
             message: "Login successful",
-            "token": "123"
+            "token": token
         }
     }
 
@@ -32,12 +36,19 @@ class AuthService{
                 password,
                 ac_type
             });
-            return user
-    
-    
-    
-    }
+            return {
+                msg: "User registered successfully",
+                "token": "123"
+            }
 }
 
-
+    static async profileUser(user){
+        const userd = await Usermodel.findById(user)
+        .select("name email ac_type createdAt -_id")
+        if (!userd){
+            throw new ApiError(404, "User not found")
+        }
+        return userd
+    }
+    }
 module.exports = AuthService
