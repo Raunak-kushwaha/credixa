@@ -1,12 +1,20 @@
+"use client";
 import Navbar from '@/components/Navbar'
+import { MainContextProvider } from '@/context/MainContext'
+
 import React from 'react'
 
-const MainLayout = ({ children }) => {
+import {ToastContainer} from 'react-toastify'
+import 'react-toastify/dist/ReactToastify.css'
+const MainLayout = ({children}) => {
   return (
-    <div>
-        <Navbar/>
-      {children}
-    </div>
+    
+    <MainContextProvider>
+    <ToastContainer/>
+    <Navbar/>
+        {children}
+    </MainContextProvider>
+    
   )
 }
 

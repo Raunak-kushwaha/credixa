@@ -1,8 +1,12 @@
-    import Link from 'next/link'
+ "use client"
+ import Link from 'next/link'
     import React from 'react'
     import Logo from './reusable/Logo'
+import { useMainContext } from '@/context/MainContext'
 
     const Navbar = () => {
+        const { user, LogoutHandler } = useMainContext()
+        
     return (
     <>
                         <header className="w-full border-b rounded-b-md ">
@@ -13,8 +17,13 @@
                             <li><Link href={'/'}>Home</Link></li>
                             <li><Link href={'/services'}>Services</Link></li>
                             <li><Link href={'/about'}>About</Link></li>
-                            <li><Link href={'/login'}>Login</Link></li>
-                        </ul>
+                        {user ?<>
+                <li>
+                    <button onClick={LogoutHandler} className='bg-white text-rose-700 px-4 py-1 cursor-pointer font-medium rounded'>Logout</button>
+                </li>
+              </>:  <li>
+                    <Link href={'/login'}>Login</Link>
+                </li>}                        </ul>
                     
                     </nav>
                     </header>

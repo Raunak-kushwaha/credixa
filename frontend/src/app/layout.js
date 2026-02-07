@@ -29,8 +29,7 @@ export default function RootLayout({ children }) {
       <body
         className={`${PoppinsFont.variable}`}
       >
-        <MainLayout>{children}</MainLayout>
-        {children}
+        <MainLayout>{children}</MainLayout>        
       </body>
     </html>
   );
