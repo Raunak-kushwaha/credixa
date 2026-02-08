@@ -35,10 +35,11 @@ class AuthService{
                 email,
                 password,
                 ac_type
-            });
+            })
+            const token = JWTService.generateToken(user._id)
             return {
                 msg: "User registered successfully",
-                "token": "123"
+                "token": token
             }
 }
 
