@@ -1,29 +1,33 @@
+"use client"
 import { FaRegCreditCard } from "react-icons/fa6";
 import { LuWallet } from "react-icons/lu";
 import { GiReceiveMoney } from "react-icons/gi";
 import Link from "next/link";
 import HeaderName from "@/components/HeaderName";
+import { useMainContext } from "@/context/MainContext";
 
 const Homepage = () => {
+
+  const {user} = useMainContext()
   const dashboard_data = [
     {
       title: "Amount",
-      Icon: <LuWallet className="text-4xl text-yellow-400"/>,
-      value: 0,
-      link: '/amount'
+      Icon: <LuWallet className="text-4xl text-yellow-400" />,
+      value: `₹${user?.amount}`,
+      link: "/amount",
     },
     {
       title: "Fixed Deposit",
-      Icon: <GiReceiveMoney className="text-4xl text-rose-700"/>,
+      Icon: <GiReceiveMoney className="text-4xl text-rose-700" />,
       value: 0,
-      link: '/fd-amount'
+      link: "/fd-amount",
     },
     {
       title: "ATM Cards",
-      Icon: <FaRegCreditCard className="text-4xl"/>,
+      Icon: <FaRegCreditCard className="text-4xl" />,
       value: 0,
-      link:'/atm-cards'
-    }
+      link: "/atm-cards",
+    },
   ];
 
   return (

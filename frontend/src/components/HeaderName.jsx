@@ -9,7 +9,7 @@ const HeaderName = () => {
   return (
     <>
           <div className="py-1">
-      <h1 className="text-3xl font-bold capitalize">Welcome {user.name}</h1>
+      <h1 className="text-3xl font-bold capitalize">Welcome {user?.name}</h1>
     </div>
     </>
   )

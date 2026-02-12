@@ -3,6 +3,8 @@ const ApiError = require("../utils/ApiError");
 const bcrypt = require('bcryptjs');
 const JWTService = require("../utils/JwtService");
 const { check } = require("express-validator");
+const { AccountModel } = require("../models/Account.model");
+const { TransactionModel } = require("../models/Transactions.model");
 class AuthService{
     static async loginUser(body){
         const {email, password} = body
@@ -43,13 +45,43 @@ class AuthService{
             }
 }
 
-    static async profileUser(user){
-        const userd = await Usermodel.findById(user)
-        .select("name email ac_type createdAt -_id")
-        if (!userd){
-            throw new ApiError(404, "User not found")
+    static async profileUser(user) {
+    const userd = await Usermodel.findById(user)
+      .select("name email ac_type createdAt -_id");
+
+    
+    const profile_obj = {}
+
+    const account = await AccountModel.findOne({ user });
+
+    // If account doesn't exist, create it
+    if (!account) {
+      const ac = await AccountModel.create({
+        user,
+        amount: 0,
+      });
+
+      await TransactionModel.create({
+        account: ac._id,
+        amount: 0,
+        type: "credit",
+        isSuccess: true,
+        remark: "Account opening!"
+      });
+    
+
+    profile_obj ['account_no']= ac._id,
+    profile_obj ['amount']= ac.amount
+}
+
+profile_obj ['account_no']= account._id,
+profile_obj ['amount']= account.amount
+
+    if (!userd) {
+        throw new ApiError(404, "User not found");
         }
-        return userd
-    }
+    return { ...userd.toObject(), ...profile_obj };
+}
+
     }
 module.exports = AuthService

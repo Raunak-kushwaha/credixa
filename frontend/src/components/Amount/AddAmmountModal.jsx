@@ -8,30 +8,75 @@ import { SiRazorpay } from "react-icons/si";
 import { Field, Form, Formik } from 'formik';
 import * as yup from 'yup'
 import { toast } from 'react-toastify';
+import { loadScript } from '@/utils/loadScripts';
+import { checkout_url, razorpayCallBackUrl } from '@/utils/constant';
+import { axiosClient } from '@/utils/AxiosClient';
+import { useMainContext } from '@/context/MainContext';
 
 
-export default function AddAmountModal() {
+export default function AddAmountModal({id}) {
+
+  const {user} = useMainContext()
+
   let [isOpen, setIsOpen] = useState(false)
 
   const [loading,setLoading] = useState(false)
 
   const initial_state={
-    amount:0
+    amount:0,
+    account_no:id
   }
 
   const validationSchema = yup.object({
     amount:yup.number().min(1, "Amount cannot be empty").required("Amount is required")
   })
 
-  const onSubmitHandler = (values, {resetForm}) => {
+  const onSubmitHandler = async (values, {resetForm}) => {
     try{
         setLoading(true)
-            console.log(values);
-            toast.success("Amount added")
-            resetForm()
+            //console.log(values);
+            await loadScript(checkout_url)
+
+            const response = await axiosClient.post('/amount/add-money',values,{
+      headers:{
+        'Authorization':'Bearer '+ localStorage.getItem("token")
+      }
+     })
+     const data = await response.data
+     
+
+            const options = {
+key: `rzp_test_SDpRFBrxzIvRMx`, 
+amount: (values.amount*100).toString(),
+currency: 'INR',
+name: "Credixa Corp.",
+description: "Add Money Transaction",
+callback_url: razorpayCallBackUrl(data.txn_id),
+"image":"https://dashboard-assets.razorpay.com/dashboard/core-bundles/shell/static/standard.6b33a3feedbe5922.svg",
+//image: { logo },
+order_id: data.order_id,
+
+prefill: {
+name: user.name,
+email: user.email,
+contact: "9999999999"
+},
+theme: {
+color: "#61dafb",
+},
+};
+
+
+
+const paymentObject = new window. Razorpay(options);
+paymentObject. open () ;
+
+           
+           // resetForm()
 
     } catch (error) {
-      toast.error(error.response?.data?.msg || error.message);
+    console.error('Payment error:', error);
+    toast.error(error?.response?.data?.msg || error?.message || 'Payment failed. Please try again.');
         } finally{
             setLoading(false)
         }
