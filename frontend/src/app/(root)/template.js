@@ -10,6 +10,8 @@ import { useDispatch, useSelector } from 'react-redux';
 import {MdDashboard} from 'react-icons/md'
 import { LuSquareUser } from "react-icons/lu"
 import { GrCurrency } from "react-icons/gr";
+import { MdOutlineReceiptLong } from "react-icons/md";
+import { PiHandCoinsBold } from "react-icons/pi";
 
 
 
@@ -67,9 +69,23 @@ const RootTemplate = ({children}) => {
         >
           <Menu className="!bg-white !min-h-screen lg:!min-h-[90vh] px-3 py-3">
             <CustomMenu link={"/"} text={"Home"} Icon={MdDashboard} />
-                        <CustomMenu link={"/amount"} text={"Funds"} Icon={GrCurrency} />
-            <CustomMenu link={"/profile"} text={"Profile"} Icon={LuSquareUser} />
+            <CustomMenu link={"/amount"} text={"Funds"} Icon={GrCurrency} />
+            <CustomMenu
+              link={"/transactions"}
+              text={"Transactions"}
+              Icon={MdOutlineReceiptLong}
+            />
+            <CustomMenu
+              link={"/fd-amount"}
+              text={"Fix Deposit"}
+              Icon={PiHandCoinsBold}
+            />
 
+            <CustomMenu
+              link={"/profile"}
+              text={"Profile"}
+              Icon={LuSquareUser}
+            />
           </Menu>
         </Sidebar>
         <main className="px-1 md:px-3 w-full">{children}</main>

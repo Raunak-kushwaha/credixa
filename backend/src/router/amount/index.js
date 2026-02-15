@@ -10,4 +10,9 @@ router.post('/add-money',AuthMiddleware,AmountValidation.addMoney,ValidationMidd
 
 router.post('/payment/:txn_id', AmountController.verifyPayment)
 
+router.post('/cancel-payment/:txn_id', AuthMiddleware, AmountController.cancelPayment)
+
+router.get('/transactions', AuthMiddleware, AmountController.getAllTransactions);
+
+
 module.exports = router

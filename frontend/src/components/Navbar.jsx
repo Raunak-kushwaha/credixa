@@ -13,7 +13,7 @@ import { setIsToggled } from '@/redux/slice/sidebarSlice'
     const Navbar = () => {
   const { user, LogoutHandler } = useMainContext();
   const dispatch = useDispatch();
-  const pathname = usePathname();   // ⭐ added
+  const pathname = usePathname();   
 
   return (
     <header className="w-full border-b rounded-b-md">

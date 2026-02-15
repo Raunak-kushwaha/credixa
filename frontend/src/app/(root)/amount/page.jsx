@@ -6,8 +6,8 @@ import React from 'react'
 const AmountPage = () => {
   const {user} = useMainContext()
   return (
-    <>
-      <div className="container py-10">
+    <div className="container py-10">
+      <div className="flex flex-col gap-y-4">
         <HeaderName/>
         <div className="card w-1/3 border py-5 rounded flex items-center justify-between px-3">
         <div className="flex flex-col">
@@ -21,7 +21,7 @@ const AmountPage = () => {
         
         </div>
       </div>
-    </>
+    </div>
   )
 }
 

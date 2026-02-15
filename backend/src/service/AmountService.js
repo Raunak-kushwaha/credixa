@@ -1,4 +1,3 @@
-const { url } = require("inspector");
 const { AccountModel } = require("../models/Account.model");
 const { TransactionModel } = require("../models/Transactions.model");
 const { UserModel } = require("../models/User.model");
@@ -49,7 +48,7 @@ class AmountService{
         const isValid = expect === razorpay_signature;
         if(!isValid){
             return {
-                url:'http://localhost:3000/payment-failed'
+                url:`${process.env.FRONTEND_URI}/transactions?error=Transaction Failed`
             }
         }
 
@@ -61,7 +60,7 @@ class AmountService{
             razorpayOrderId:razorpay_order_id,
             razorpayPaymentId:razorpay_payment_id,
             razorpaySignature:razorpay_signature,
-             remark:'Payment Credit '
+             remark:'Transaction Success'
         })
 
 
@@ -71,9 +70,43 @@ class AmountService{
             amount:account.amount+transaction.amount
         })
 
-        return{
-            url:'http://localhost:3000/payment-success'
+        return {
+            url:`${process.env.FRONTEND_URI}/transactions?success=Transaction Success`
         }
+ 
+    }
+
+    static async getAllTransactions(user){
+        const all_transaction  =await TransactionModel.find({user})
+        .sort({createdAt:-1})
+        .select("type remark createdAt amount isSuccess")
+
+        return all_transaction
+
+
+    }
+
+    static async addNewAccount(user,body){
+        
+      const exist_user=  await UserModel.findById(user)
+      if(!exist_user){
+        throw new ApiError(401,"User Not Found")
+      }
+
+      const ac=  await AccountModel.create({
+            user,
+            ac_type:body.ac_type,
+            amount:0
+        })
+
+        await TransactionModel.create({
+            account:ac._id,
+            amount:0,
+            remark:'New Account Opening',
+            type:'credit',
+            user:user,
+            isSuccess:true
+        })
 
         return {
             msg:"Account Created :)"

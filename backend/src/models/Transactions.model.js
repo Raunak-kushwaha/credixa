@@ -5,8 +5,6 @@ const Schema = new mongoose.Schema({
         type:mongoose.Schema.Types.ObjectId,
         ref:'account',
         required:true
-
-
     },
     user:{
         type:mongoose.Schema.Types.ObjectId,
@@ -24,7 +22,7 @@ const Schema = new mongoose.Schema({
     },
     type:{
         type:String,
-        enum:['credit','debit'],
+        enum:['credit','debit','fix_deposit'],
         required:true
     },
     razorpayPaymentId:{
@@ -41,7 +39,7 @@ const Schema = new mongoose.Schema({
     },
     remark:{
         type:String,
-        default:''
+        default:'Transaction Failed'
     }
 },{
     timestamps:true

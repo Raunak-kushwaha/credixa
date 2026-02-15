@@ -9,8 +9,24 @@ class AmountController{
     }
 
     static verifyPayment = async(req,res)=>{
-        const res_obj = await AmountService.verifyPayment(req.body,req.params.txn_id)
-        res.redirect(res_obj.url)
+        try {
+            const res_obj = await AmountService.verifyPayment(req.body,req.params.txn_id)
+            res.redirect(res_obj.url)
+        } catch(error) {
+            console.error('Payment verification error in controller:', error);
+            // Redirect to error page if verification fails
+            res.redirect(`${process.env.FRONTEND_URI}/transactions?error=Payment Processing Failed`)
+        }
+    }
+
+    static cancelPayment = async(req,res)=>{
+        try {
+            const res_obj = await AmountService.cancelPayment(req.params.txn_id)
+            res.status(200).send(res_obj)
+        } catch(error) {
+            console.error('Cancel payment error in controller:', error);
+            res.status(500).send({msg: 'Failed to cancel payment'})
+        }
     }
     
     static getAllTransactions = async(req,res)=>{
