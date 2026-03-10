@@ -70,6 +70,7 @@ const AdminDashboard = () => {
     transactionTypes: [],
     moneyFlow: { incoming: 0, outgoing: 0 },
   });
+  const [pendingUsers, setPendingUsers] = useState(0);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
@@ -86,6 +87,9 @@ const AdminDashboard = () => {
         }
 
         const response = await axiosClient.get("/admin/analytics", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const pendingResponse = await axiosClient.get("/admin/pending-users/count", {
           headers: { Authorization: `Bearer ${token}` },
         });
 
@@ -107,6 +111,9 @@ const AdminDashboard = () => {
               moneyFlow: response.data.charts.moneyFlow ?? { incoming: 0, outgoing: 0 },
             });
           }
+        }
+        if (typeof pendingResponse.data?.count !== "undefined") {
+          setPendingUsers(pendingResponse.data.count);
         }
       } catch (error) {
         toast.error(
@@ -231,7 +238,14 @@ const StatCard = ({ title, value, bgColor, icon, link, subtitle, delta }) => {
             <FaUsers className="text-amber-700 text-xl" />
           </div>
           <div>
-            <p className="font-semibold text-gray-800">Review pending users</p>
+            <p className="font-semibold text-gray-800 flex items-center gap-2">
+              Review pending users
+              {pendingUsers > 0 && (
+                <span className="bg-red-500 text-white text-xs font-semibold px-2 py-0.5 rounded-full">
+                  {pendingUsers}
+                </span>
+              )}
+            </p>
             <p className="text-sm text-gray-600">Approve or reject new signups</p>
           </div>
         </div>
