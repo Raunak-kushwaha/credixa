@@ -30,13 +30,37 @@ class AmountController{
     }
     
     static getAllTransactions = async(req,res)=>{
-        const res_obj = await AmountService.getAllTransactions(req.user)
+        const filters = {
+            type: req.query.type,
+            startDate: req.query.startDate,
+            endDate: req.query.endDate,
+            minAmount: req.query.minAmount,
+            maxAmount: req.query.maxAmount
+        };
+        const page = req.query.page ? parseInt(req.query.page) : 1;
+        const limit = req.query.limit ? parseInt(req.query.limit) : 50;
+        const res_obj = await AmountService.getAllTransactions(req.user, filters, page, limit)
         res.status(200).send(res_obj)
     }
     
     static addNewAccount = async(req,res)=>{
         const res_obj = await AmountService.addNewAccount(req.user,req.body)
         res.status(201).send(res_obj)
+    }
+
+    static transfer = async(req,res)=>{
+        const res_obj = await AmountService.transfer(req.body, req.user)
+        res.status(200).send(res_obj)
+    }
+
+    static getAnalytics = async(req,res)=>{
+        try {
+            const res_obj = await AmountService.getAnalytics(req.user)
+            res.status(200).send(res_obj)
+        } catch(error) {
+            const statusCode = error.statusCode || 500;
+            res.status(statusCode).send({msg: error.message})
+        }
     }
 
     

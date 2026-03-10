@@ -41,33 +41,32 @@ const RootTemplate = ({children}) => {
 
   const CustomMenu = ({ link, text, Icon }) => {
     const pathname = usePathname();
+    const isActive = pathname === link || (link !== "/" && pathname.startsWith(link));
     return (
-      <>
-        <MenuItem
-          style={{
-            background: pathname === link ? "#155dfc" : "#ffff",
-            color: pathname === link ? "white" : "black",
-            borderRadius: pathname === link ? "10px" : "0px",
-          }}
-          icon={<Icon className="text-2xl" />}
-          component={<Link href={link} />}
-        >
-          {" "}
-          {text}{" "}
-        </MenuItem>
-      </>
+      <MenuItem
+        style={{
+          background: isActive ? "#eef2ff" : "transparent",
+          color: isActive ? "#4f46e5" : "#374151",
+          borderRadius: "8px",
+        }}
+        className="!mb-1"
+        icon={<Icon className={isActive ? "text-indigo-600" : "text-gray-500"} style={{ fontSize: "1.125rem" }} />}
+        component={<Link href={link} />}
+      >
+        {text}
+      </MenuItem>
     );
   };
 
   return (
-    <>
-      <section className="flex item-start">
-        <Sidebar
-          breakPoint="lg"
-          toggled={isToggled}
-          onBackdropClick={() => dispatch(setIsToggled())}
-        >
-          <Menu className="!bg-white !min-h-screen lg:!min-h-[90vh] px-3 py-3">
+    <section className="flex min-h-screen">
+      <Sidebar
+        breakPoint="lg"
+        toggled={isToggled}
+        onBackdropClick={() => dispatch(setIsToggled())}
+        className="!border-r !border-gray-200"
+      >
+        <Menu className="!bg-white !min-h-screen !border-0 px-3 py-4">
             <CustomMenu link={"/"} text={"Home"} Icon={MdDashboard} />
             <CustomMenu link={"/amount"} text={"Funds"} Icon={GrCurrency} />
             <CustomMenu
@@ -87,10 +86,10 @@ const RootTemplate = ({children}) => {
               Icon={LuSquareUser}
             />
           </Menu>
-        </Sidebar>
-        <main className="px-1 md:px-3 w-full">{children}</main>
-      </section>
-    </>
+      </Sidebar>
+      <main className="flex-1 px-4 py-4 md:px-6">{children}</main>
+    </section>
+    
   );
 }
 

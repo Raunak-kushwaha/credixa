@@ -12,15 +12,27 @@ class AuthService{
         if (!check_exist){
             throw new ApiError(400, "User with this email does not exist")
         }
+        
+        // Check if account is frozen
+        if (check_exist.isFreezed){
+            throw new ApiError(403, "Account is frozen")
+        }
+        
+        // Check if account is approved (only for regular users, not admins)
+        if (check_exist.role === 'user' && !check_exist.isApproved){
+            throw new ApiError(403, "Account pending admin approval")
+        }
+        
         const isMatch = await bcrypt.compare(password, check_exist.password)
         if (!isMatch){
             throw new ApiError(400, "Invalid password")
         }
 
-        const token = JWTService.generateToken(check_exist._id)
+        const token = JWTService.generateToken(check_exist._id, check_exist.role)
         return {
             message: "Login successful",
-            "token": token
+            "token": token,
+            "role": check_exist.role
         }
     }
 
@@ -36,9 +48,10 @@ class AuthService{
                 name,
                 email,
                 password,
-                ac_type
+                ac_type,
+                role: 'user'
             })
-            const token = JWTService.generateToken(user._id)
+            const token = JWTService.generateToken(user._id, user.role)
             return {
                 msg: "User registered successfully",
                 "token": token
@@ -47,7 +60,7 @@ class AuthService{
 
     static async profileUser(user) {
     const userd = await Usermodel.findById(user)
-      .select("name email ac_type createdAt -_id");
+      .select("name email ac_type role isFreezed createdAt -_id");
 
     
     const profile_obj = {}

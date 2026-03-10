@@ -18,7 +18,17 @@ const schema = new mongoose.Schema({
         {type: String, 
         required: true, 
         enum: ['saving', 'current'], 
-        default: 'saving'}
+        default: 'saving'},
+    role:
+        {type: String,
+        enum: ['user', 'admin'],
+        default: 'user'},
+    isFreezed:
+        {type: Boolean,
+        default: false},
+    isApproved:
+        {type: Boolean,
+        default: false}
 }, 
 
 {timestamps: true});

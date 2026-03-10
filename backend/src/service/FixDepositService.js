@@ -4,7 +4,6 @@ const { TransactionModel } = require("../models/Transactions.model")
 // import { FixDepositModel } from '../models/FixDeposit.model';
 // import { TransactionModel } from '../models/Transactions.model';
 const { Account_LIMIT } = require("./../utils/constant")
- 
 const ApiError = require("../utils/ApiError")
 
 class FixDepositService{

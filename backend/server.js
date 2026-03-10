@@ -10,6 +10,7 @@ const {ConnectDB} = require('./src/config/db.config')
 
 const port = process.env.PORT || 8000
 ConnectDB()
-app.listen(port, () => {
-  console.log(`Example app listening on port ${port}`)
+// bind to all network interfaces so the server is reachable from other devices
+app.listen(port, "0.0.0.0", () => {
+  console.log(`Example app listening on port ${port} (0.0.0.0)`)
 })

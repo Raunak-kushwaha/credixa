@@ -3,6 +3,7 @@ const router= express.Router()
 const AuthRoute = require("./auth")
 const AmountRoute = require("./amount")
 const FdRoute = require("./fd");
+const AdminRoute = require("./admin");
 
 const routes =[{
     path:'/auth',
@@ -11,7 +12,11 @@ const routes =[{
     path:'/amount',
     route:AmountRoute
 },{ path: "/fd", 
-    route: FdRoute }
+    route: FdRoute
+},{
+    path: "/admin",
+    route: AdminRoute
+}
 ]
 
 routes.forEach((cur)=>{

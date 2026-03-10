@@ -9,6 +9,11 @@ class AmountValidation{
     static addAccount=[
         body('ac_type').isString().notEmpty().withMessage("Account Type  is Required").isIn(['saving','current']).withMessage("Account should be a saving or current"), 
     ]
+
+    static transfer=[
+        body('receiverEmail').isEmail().notEmpty().withMessage("Receiver email is required"),
+        body('amount').isNumeric().notEmpty().withMessage("Amount is Required")
+    ]
 }
 
 module.exports =AmountValidation

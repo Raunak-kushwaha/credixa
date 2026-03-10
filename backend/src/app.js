@@ -5,7 +5,12 @@ const app = express()
 const morgan = require('morgan')
 const cors = require('cors')
 
-app.use(cors())
+// allow CORS from any origin (frontends running on local network)
+// credentials true enables cookies if needed, origin true reflects request origin
+app.use(cors({
+  origin: true,
+  credentials: true
+}))
 app.use(express.static('public'));
 app.use(express.json({}))
 app.use(express.urlencoded({extended:false}))

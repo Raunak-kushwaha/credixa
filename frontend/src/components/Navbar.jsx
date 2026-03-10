@@ -1,59 +1,277 @@
- "use client"
- import Link from 'next/link'
-    import React from 'react'
-    import Logo from './reusable/Logo'
-import { useMainContext } from '@/context/MainContext'
-import { SlMenu } from "react-icons/sl";
-import { useDispatch } from 'react-redux'
+"use client";
+
+import Link from "next/link";
+import React from "react";
+import Logo from "./reusable/Logo";
+import { useMainContext } from "@/context/MainContext";
 import { usePathname } from "next/navigation";
+import { useDispatch } from "react-redux";
+import { setIsToggled } from "@/redux/slice/sidebarSlice";
+import { Menu, MenuButton, MenuItem, MenuItems, Transition } from "@headlessui/react";
+import { SlMenu } from "react-icons/sl";
+import { Search, User, LogOut, Bell, ChevronDown } from "lucide-react";
 
-import { setIsToggled } from '@/redux/slice/sidebarSlice'
+const ADMIN_TABS = [
+  { label: "Overview", href: "/admin/dashboard" },
+  { label: "Pending", href: "/admin/pending-users" },
+  { label: "Users", href: "/admin/users" },
+  { label: "Accounts", href: "/admin/accounts" },
+  { label: "Transactions", href: "/admin/transactions" },
+  { label: "Finances", href: "/admin/fds" },
+  { label: "Activity", href: "/admin/activity" },
+];
 
+function ProfileDropdown({ user, onLogout, isAdmin }) {
+  return (
+    <Menu as="div" className="relative">
+      <MenuButton className="flex items-center gap-2 rounded-full focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
+        <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-indigo-100 text-indigo-600">
+          {user?.name ? (
+            <span className="text-sm font-semibold">
+              {user.name.charAt(0).toUpperCase()}
+            </span>
+          ) : (
+            <User className="h-5 w-5" />
+          )}
+        </div>
+        <div className="hidden items-center gap-1 sm:flex">
+          <span className="max-w-[120px] truncate text-sm font-medium text-gray-700">
+            {user?.name || "Account"}
+          </span>
+          <ChevronDown className="h-4 w-4 text-gray-500" />
+        </div>
+      </MenuButton>
+      <Transition
+        enter="transition duration-100 ease-out"
+        enterFrom="transform scale-95 opacity-0"
+        enterTo="transform scale-100 opacity-100"
+        leave="transition duration-75 ease-out"
+        leaveFrom="transform scale-100 opacity-100"
+        leaveTo="transform scale-95 opacity-0"
+      >
+        <MenuItems className="absolute right-0 z-50 mt-2 w-56 origin-top-right rounded-xl border border-gray-200 bg-white py-1 shadow-lg focus:outline-none">
+          <div className="border-b border-gray-100 px-4 py-3">
+            <p className="truncate text-sm font-medium text-gray-900">
+              {user?.name || "User"}
+            </p>
+            <p className="truncate text-xs text-gray-500">{user?.email}</p>
+          </div>
+          {!isAdmin && (
+            <MenuItem>
+              {({ focus }) => (
+                <Link
+                  href="/profile"
+                  className={`flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 ${focus ? "bg-gray-50" : ""}`}
+                >
+                  <User className="h-4 w-4" />
+                  Profile
+                </Link>
+              )}
+            </MenuItem>
+          )}
+          <MenuItem>
+              <button
+              onClick={onLogout}
+              className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50"
+            >
+              <LogOut className="h-4 w-4" />
+              Log out
+            </button>
+          </MenuItem>
+        </MenuItems>
+      </Transition>
+    </Menu>
+  );
+}
 
-    const Navbar = () => {
+export default function Navbar() {
   const { user, LogoutHandler } = useMainContext();
   const dispatch = useDispatch();
-  const pathname = usePathname();   
+  const pathname = usePathname();
 
-  return (
-    <header className="w-full border-b rounded-b-md">
-      <nav className="w-[98%] lg:w-[80%] mx-auto py-3 flex items-center justify-between">
-        <div className="flex items-center gap-x-2">
-          <button
-            onClick={() => dispatch(setIsToggled())}
-            className="bg-gray-100 rounded-full p-2 sm:hidden text-xl hover:bg-gray-200 cursor-pointer"
+  const isAuthPage = pathname === "/login" || pathname === "/register";
+  const isAdminLogin = pathname === "/admin/login";
+  const isAdminArea = pathname.startsWith("/admin") && !isAdminLogin;
+  const isUserArea = pathname === "/" || pathname.startsWith("/amount") || 
+    pathname.startsWith("/transactions") || pathname.startsWith("/fd-amount") || 
+    pathname.startsWith("/profile");
+  const isAdmin = user?.role === "admin" || (typeof window !== "undefined" && localStorage.getItem("role") === "admin");
+
+  const showUserNav = user && isUserArea;
+  const showAdminNav = user && isAdmin && isAdminArea;
+
+  // Auth pages: minimal nav
+  if (isAuthPage) {
+    return (
+      <header className="sticky top-0 z-40 border-b border-gray-200 bg-white/95 backdrop-blur">
+        <nav className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 sm:px-6">
+          <Logo href="/" variant="dark" />
+          <div className="flex items-center gap-3">
+            <Link
+              href="/login"
+              className="text-sm font-medium text-gray-600 hover:text-gray-900"
+            >
+              Log in
+            </Link>
+            <Link
+              href="/register"
+              className="rounded-lg bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-indigo-700"
+            >
+              Sign up
+            </Link>
+          </div>
+        </nav>
+      </header>
+    );
+  }
+
+  // Admin login: minimal nav
+  if (isAdminLogin) {
+    return (
+      <header className="sticky top-0 z-40 border-b border-gray-200 bg-white/95 backdrop-blur">
+        <nav className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 sm:px-6">
+          <Logo href="/admin/login" variant="dark" />
+          <Link
+            href="/"
+            className="text-sm font-medium text-gray-600 hover:text-gray-900"
           >
-            <SlMenu />
-          </button>
-          <Logo />
+            Main site
+          </Link>
+        </nav>
+      </header>
+    );
+  }
+
+  // Admin dashboard: full SaaS nav with tabs
+  if (showAdminNav) {
+    return (
+      <header className="sticky top-0 z-40 border-b border-gray-200 bg-white shadow-sm">
+        <div className="mx-auto max-w-[1600px] px-4 sm:px-6">
+          <nav className="flex h-14 items-center justify-between gap-4">
+            <div className="flex min-w-0 items-center gap-6">
+              <Logo href="/admin/dashboard" variant="dark" />
+              <div className="hidden flex-1 md:flex">
+                {ADMIN_TABS.map((tab) => {
+                  const isActive =
+                    pathname === tab.href ||
+                    (tab.href !== "/admin/dashboard" &&
+                      pathname.startsWith(tab.href));
+                  return (
+                    <Link
+                      key={tab.href}
+                      href={tab.href}
+                      className={`whitespace-nowrap border-b-2 px-3 py-3 text-sm font-medium transition-colors ${
+                        isActive
+                          ? "border-indigo-600 text-indigo-600"
+                          : "border-transparent text-gray-600 hover:border-gray-300 hover:text-gray-900"
+                      }`}
+                    >
+                      {tab.label}
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="flex flex-1 items-center justify-end gap-2 sm:gap-4">
+              <div className="hidden max-w-xs flex-1 sm:block lg:max-w-sm">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                  <input
+                    type="search"
+                    placeholder="Search..."
+                    className="w-full rounded-lg border border-gray-200 bg-gray-50 py-2 pl-9 pr-3 text-sm text-gray-900 placeholder-gray-500 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                    readOnly
+                    onFocus={(e) => e.target.blur()}
+                  />
+                </div>
+              </div>
+              <ProfileDropdown
+                user={user}
+                onLogout={LogoutHandler}
+                isAdmin={true}
+              />
+            </div>
+          </nav>
         </div>
+      </header>
+    );
+  }
 
-        <ul className="flex items-center justify-center gap-x-2">
-          <li><Link href="/">Home</Link></li>
-          <li><Link href="/services">Services</Link></li>
-          <li><Link href="/about">About</Link></li>
+  // User dashboard: nav with sidebar toggle + profile
+  if (showUserNav) {
+    return (
+      <header className="sticky top-0 z-40 border-b border-gray-200 bg-white shadow-sm">
+        <nav className="mx-auto flex h-14 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => dispatch(setIsToggled())}
+              className="rounded-lg p-2 text-gray-600 hover:bg-gray-100 lg:hidden"
+              aria-label="Toggle menu"
+            >
+              <SlMenu className="h-5 w-5" />
+            </button>
+            <Logo href="/" variant="dark" />
+          </div>
 
-          {user ? (
-            <li>
-              <button
-                onClick={LogoutHandler}
-                className="bg-white text-rose-700 px-4 py-1 cursor-pointer font-medium rounded"
-              >
-                Logout
-              </button>
-            </li>
-          ) : (
-            pathname !== "/login" && (
-              <li>
-                <Link href="/login">Login</Link>
-              </li>
-            )
-          )}
-        </ul>
+          <div className="flex items-center gap-3 sm:gap-4">
+            <div className="hidden max-w-[200px] sm:block lg:max-w-[240px]">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                <input
+                  type="search"
+                  placeholder="Search..."
+                  className="w-full rounded-lg border border-gray-200 bg-gray-50 py-2 pl-9 pr-3 text-sm text-gray-900 placeholder-gray-500 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                  readOnly
+                  onFocus={(e) => e.target.blur()}
+                />
+              </div>
+            </div>
+            <button
+              className="relative rounded-lg p-2 text-gray-600 hover:bg-gray-100"
+              aria-label="Notifications"
+            >
+              <Bell className="h-5 w-5" />
+            </button>
+            <ProfileDropdown
+              user={user}
+              onLogout={LogoutHandler}
+              isAdmin={false}
+            />
+          </div>
+        </nav>
+      </header>
+    );
+  }
+
+  // Fallback: minimal for logged-in users on other routes
+  if (user) {
+    return (
+      <header className="sticky top-0 z-40 border-b border-gray-200 bg-white">
+        <nav className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 sm:px-6">
+          <Logo href={isAdmin ? "/admin/dashboard" : "/"} variant="dark" />
+          <ProfileDropdown
+            user={user}
+            onLogout={LogoutHandler}
+            isAdmin={isAdmin}
+          />
+        </nav>
+      </header>
+    );
+  }
+
+  // Not logged in, not on auth page: redirect or minimal
+  return (
+    <header className="sticky top-0 z-40 border-b border-gray-200 bg-white">
+      <nav className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 sm:px-6">
+        <Logo href="/" variant="dark" />
+        <Link
+          href="/login"
+          className="rounded-lg bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-indigo-700"
+        >
+          Log in
+        </Link>
       </nav>
     </header>
   );
-};
-
-
-    export default Navbar
+}

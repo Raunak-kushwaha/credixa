@@ -11,13 +11,15 @@ import 'react-toastify/dist/ReactToastify.css'
 const MainLayout = ({children}) => {
   return (
     <Provider store={store}>
-    <MainContextProvider>
-    <ToastContainer/>
-    <Navbar/>
-        {children}
-    </MainContextProvider>
+      <MainContextProvider>
+        <ToastContainer />
+        <Navbar />
+        <div className="min-h-screen bg-gray-50">
+          {children}
+        </div>
+      </MainContextProvider>
     </Provider>
-  )
+  );
 }
 
 export default MainLayout
