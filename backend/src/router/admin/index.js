@@ -59,4 +59,8 @@ router.route("/user/:id/unfreeze")
 router.route("/activity")
     .get(AdminController.getActivityLogs);
 
+// User login activity
+router.route("/login-activity")
+    .get(AdminController.getUserLoginActivity);
+
 module.exports = router;

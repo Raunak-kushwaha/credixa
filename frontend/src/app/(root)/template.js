@@ -87,7 +87,7 @@ const RootTemplate = ({children}) => {
             />
           </Menu>
       </Sidebar>
-      <main className="flex-1 px-4 py-4 md:px-6">{children}</main>
+      <main className="flex-1 px-4 md:px-6">{children}</main>
     </section>
     
   );

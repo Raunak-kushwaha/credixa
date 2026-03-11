@@ -6,7 +6,7 @@ import AnalyticsDashboard from "@/components/AnalyticsDashboard";
 
 const Homepage = () => {
 
-  const {user} = useMainContext()
+  const { user } = useMainContext()
 
 
   return (
@@ -16,7 +16,7 @@ const Homepage = () => {
           <WalletCard />
         </div>
         <div className="flex-[2]">
-          <div className="mt-2">
+          <div>
             <AnalyticsDashboard />
           </div>
         </div>

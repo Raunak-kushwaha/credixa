@@ -28,7 +28,15 @@ const schema = new mongoose.Schema({
         default: false},
     isApproved:
         {type: Boolean,
-        default: false}
+        default: false},
+    lastLoginAt: {
+        type: Date,
+        default: null
+    },
+    lastLoginIp: {
+        type: String,
+        default: ""
+    }
 }, 
 
 {timestamps: true});

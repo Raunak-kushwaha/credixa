@@ -14,7 +14,7 @@ import { axiosClient } from '@/utils/AxiosClient';
 import { useMainContext } from '@/context/MainContext';
 
 
-export default function AddAmountModal({id}) {
+export default function AddAmountModal({ id, children, className = "" }) {
 
   const {user} = useMainContext()
 
@@ -93,8 +93,15 @@ paymentObject. open () ;
 
   return (
     <>
-    
-        <button type='button' onClick={openModal}><CiSquarePlus className='text-3xl text-blue-800 cursor-pointer'/></button>
+        {children ? (
+          <button type="button" onClick={openModal} className={className}>
+            {children}
+          </button>
+        ) : (
+          <button type='button' onClick={openModal}>
+            <CiSquarePlus className='text-3xl text-blue-800 cursor-pointer'/>
+          </button>
+        )}
 
       <Transition appear show={isOpen} as={Fragment}>
         <Dialog as="div" className="relative z-10" onClose={closeModal}>

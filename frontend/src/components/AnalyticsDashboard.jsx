@@ -16,8 +16,6 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { toast } from "react-toastify";
-import { FaUniversity, FaMoneyBillWave } from "react-icons/fa";
-import { FaArrowTrendUp, FaArrowTrendDown } from "react-icons/fa6";
 
 const AnalyticsDashboard = () => {
   const [analytics, setAnalytics] = useState({
@@ -26,6 +24,8 @@ const AnalyticsDashboard = () => {
     totalFDInvested: 0,
   });
   const [dailyTransactions, setDailyTransactions] = useState([]);
+  const [recentTransactions, setRecentTransactions] = useState([]);
+  const [tx30d, setTx30d] = useState([]);
   const [loading, setLoading] = useState(true);
   const [transactionView, setTransactionView] = useState('monthly'); // 'monthly' or 'daily'
   const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
@@ -33,6 +33,9 @@ const AnalyticsDashboard = () => {
   useEffect(() => {
     if (token) {
       fetchAnalytics();
+      fetchRecentTransactions();
+      // Preload last-30-days dataset so side widgets are real immediately
+      fetchDailyTransactions();
     }
   }, [token]);
 
@@ -50,6 +53,24 @@ const AnalyticsDashboard = () => {
       toast.error("Failed to load analytics");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchRecentTransactions = async () => {
+    try {
+      const response = await axiosClient.get('/amount/transactions', {
+        headers: {
+          Authorization: `Bearer ${token}`
+        },
+        params: {
+          page: 1,
+          limit: 3,
+        }
+      });
+      const items = Array.isArray(response.data?.data) ? response.data.data : [];
+      setRecentTransactions(items.slice(0, 3));
+    } catch (error) {
+      console.error('Failed to fetch recent transactions:', error);
     }
   };
 
@@ -71,9 +92,12 @@ const AnalyticsDashboard = () => {
         }
       });
 
+      const txns = Array.isArray(response.data?.data) ? response.data.data : [];
+      setTx30d(txns);
+
       // Aggregate transactions by day
       const dailyData = {};
-      response.data.data.forEach(txn => {
+      txns.forEach(txn => {
         if (txn.isSuccess) {
           const date = new Date(txn.createdAt).toISOString().split('T')[0]; // YYYY-MM-DD format
           if (!dailyData[date]) {
@@ -89,7 +113,11 @@ const AnalyticsDashboard = () => {
           day: new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
           total: total
         }))
-        .sort((a, b) => new Date(a.day) - new Date(b.day))
+        // sort by the actual date rather than the formatted label
+        .sort((a, b) => {
+          const parse = (label) => new Date(`${label} ${new Date().getFullYear()}`);
+          return parse(a.day) - parse(b.day);
+        })
         .slice(-14); // Show last 14 days
 
       setDailyTransactions(dailyArray);
@@ -113,9 +141,28 @@ const AnalyticsDashboard = () => {
 
   const COLORS = ['#10b981', '#ef4444'];
 
+  const successful30d = tx30d.filter((t) => t?.isSuccess);
+  const debit30d = successful30d.filter((t) => t.type === "debit");
+  const credit30d = successful30d.filter((t) => t.type === "credit");
+  const fd30d = successful30d.filter((t) => t.type === "fix_deposit");
+
+  const totalDebit30d = debit30d.reduce((sum, t) => sum + (Number(t.amount) || 0), 0);
+  const totalCredit30d = credit30d.reduce((sum, t) => sum + (Number(t.amount) || 0), 0);
+  const totalFd30d = fd30d.reduce((sum, t) => sum + (Number(t.amount) || 0), 0);
+  const largestTxn = successful30d.reduce((max, t) => {
+    const amt = Number(t.amount) || 0;
+    return amt > (Number(max?.amount) || 0) ? t : max;
+  }, null);
+
+  const spendingBreakdown = [
+    { label: "Debit", amount: totalDebit30d, color: "bg-red-500" },
+    { label: "Fixed Deposit", amount: totalFd30d, color: "bg-purple-500" },
+  ].filter((x) => x.amount > 0);
+  const spendingTotal = spendingBreakdown.reduce((s, x) => s + x.amount, 0) || 1;
+
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-64">
+      <div className="flex justify-center items-center">
         <div className="text-gray-500">Loading analytics...</div>
       </div>
     );
@@ -123,65 +170,6 @@ const AnalyticsDashboard = () => {
 
   return (
     <div className="space-y-6">
-      {/* Analytics Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-gray-600 text-xs font-medium mb-1">Total Received</p>
-              <p className="text-2xl font-bold text-gray-900">
-                ₹{analytics.creditVsDebit.credit.toLocaleString()}
-              </p>
-            </div>
-            <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-              <FaArrowTrendUp className="text-green-600 text-lg" />
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-3">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-gray-600 text-xs font-medium mb-1">Total Sent</p>
-              <p className="text-2xl font-bold text-gray-900">
-                ₹{analytics.creditVsDebit.debit.toLocaleString()}
-              </p>
-            </div>
-            <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
-              <FaArrowTrendDown className="text-red-600 text-lg" />
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-gray-600 text-xs font-medium mb-1">Total FD Invested</p>
-              <p className="text-2xl font-bold text-gray-900">
-                ₹{analytics.totalFDInvested.toLocaleString()}
-              </p>
-            </div>
-            <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-              <FaUniversity className="text-purple-600 text-lg" />
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-gray-600 text-xs font-medium mb-1">Net Balance</p>
-              <p className={`text-2xl font-bold ${(analytics.creditVsDebit.credit - analytics.creditVsDebit.debit) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                ₹{Math.abs(analytics.creditVsDebit.credit - analytics.creditVsDebit.debit).toLocaleString()}
-              </p>
-            </div>
-            <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-              <FaMoneyBillWave className="text-blue-600 text-lg" />
-            </div>
-          </div>
-        </div>
-      </div>
-
       {/* Charts Section - Compact Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
         {/* Transaction Chart - Left Side */}
@@ -216,7 +204,7 @@ const AnalyticsDashboard = () => {
           {transactionView === 'monthly' ? (
             analytics.monthlyTransactions.length > 0 ? (
               <ResponsiveContainer width="100%" height={180}>
-                <LineChart data={analytics.monthlyTransactions} margin={{ top: 5, right: 0, left: 0, bottom: 0 }}>
+                <LineChart data={analytics.monthlyTransactions} margin={{ top: 5, right: 5, left: 5, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
                   <XAxis
                     dataKey="month"
@@ -256,7 +244,7 @@ const AnalyticsDashboard = () => {
           ) : (
             dailyTransactions.length > 0 ? (
               <ResponsiveContainer width="100%" height={180}>
-                <LineChart data={dailyTransactions} margin={{ top: 5, right: 0, left: 0, bottom: 0 }}>
+                <LineChart data={dailyTransactions} margin={{ top: 5, right: 5, left: 5, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
                   <XAxis
                     dataKey="day"
@@ -296,55 +284,60 @@ const AnalyticsDashboard = () => {
           )}
         </div>
 
-        {/* Recent Transactions - Top Right */}
+        {/* Quick Stats - Top Right */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-          <h3 className="text-sm font-semibold text-gray-800 mb-3">Recent Transactions</h3>
-          <div className="space-y-2 max-h-44 overflow-y-auto">
-            {analytics.monthlyTransactions && analytics.monthlyTransactions.length > 0 ? (
-              <div className="text-xs space-y-2">
-                {[
-                  { name: 'Transfer to John', time: '2h ago', amount: '₹500', type: 'debit' },
-                  { name: 'Salary Credit', time: '1d ago', amount: '₹25,000', type: 'credit' },
-                  { name: 'Grocery Shopping', time: '2d ago', amount: '₹1,200', type: 'debit' },
-                ].map((txn, idx) => (
-                  <div key={idx} className="flex justify-between items-center py-1.5 border-b border-gray-50 last:border-b-0">
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-gray-800 text-xs truncate">{txn.name}</p>
-                      <p className="text-gray-500 text-xs">{txn.time}</p>
-                    </div>
-                    <p className={`font-semibold text-xs ${txn.type === 'credit' ? 'text-green-600' : 'text-red-600'}`}>
-                      {txn.type === 'credit' ? '+' : '-'}₹{txn.amount}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-gray-500 text-xs">No recent transactions</p>
-            )}
+          <h3 className="text-sm font-semibold text-gray-800 mb-3">Quick Stats</h3>
+          <div className="space-y-2 text-xs">
+            <div className="flex justify-between">
+              <span className="text-gray-600">Money In (30d)</span>
+              <span className="font-semibold text-green-600">₹{totalCredit30d.toLocaleString()}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-600">Money Out (30d)</span>
+              <span className="font-semibold text-red-600">₹{(totalDebit30d + totalFd30d).toLocaleString()}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-600">Txns (30d)</span>
+              <span className="font-semibold">{successful30d.length}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-600">Largest txn (30d)</span>
+              <span className="font-semibold">
+                ₹{Number(largestTxn?.amount || 0).toLocaleString()}
+              </span>
+            </div>
           </div>
         </div>
 
         {/* Spending Breakdown - Bottom Right */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-          <h3 className="text-sm font-semibold text-gray-800 mb-3">Spending Breakdown</h3>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-semibold text-gray-800">Money Out (last 30 days)</h3>
+            <button
+              onClick={() => handleViewChange('daily')}
+              className="text-xs font-medium text-blue-600 hover:underline"
+              type="button"
+            >
+              View daily
+            </button>
+          </div>
           <div className="space-y-2">
-            {[
-              { label: 'Food & Dining', amount: '₹3,200', percentage: 32, color: 'bg-orange-500' },
-              { label: 'Shopping', amount: '₹2,500', percentage: 25, color: 'bg-blue-500' },
-              { label: 'Bills & Utilities', amount: '₹2,000', percentage: 20, color: 'bg-green-500' },
-              { label: 'Entertainment', amount: '₹1,300', percentage: 13, color: 'bg-purple-500' },
-              { label: 'Others', amount: '₹1,000', percentage: 10, color: 'bg-gray-500' }
-            ].map((item, idx) => (
-              <div key={idx} className="space-y-1">
-                <div className="flex justify-between items-center text-xs">
-                  <span className="text-gray-700">{item.label}</span>
-                  <span className="font-semibold text-gray-800">{item.amount}</span>
+            {spendingBreakdown.length > 0 ? spendingBreakdown.map((item) => {
+              const pct = Math.round((item.amount / spendingTotal) * 100);
+              return (
+                <div key={item.label} className="space-y-1">
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="text-gray-700">{item.label}</span>
+                    <span className="font-semibold text-gray-800">₹{item.amount.toLocaleString()}</span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-1.5">
+                    <div className={`h-1.5 rounded-full ${item.color}`} style={{ width: `${pct}%` }}></div>
+                  </div>
                 </div>
-                <div className="w-full bg-gray-200 rounded-full h-1.5">
-                  <div className={`h-1.5 rounded-full ${item.color}`} style={{ width: `${item.percentage}%` }}></div>
-                </div>
-              </div>
-            ))}
+              );
+            }) : (
+              <p className="text-gray-500 text-xs">No outgoing transactions in the last 30 days</p>
+            )}
           </div>
         </div>
       </div>
@@ -379,6 +372,7 @@ const AnalyticsDashboard = () => {
                     fontSize: '11px'
                   }}
                 />
+                <Legend />
               </PieChart>
             </ResponsiveContainer>
           ) : (
@@ -388,50 +382,63 @@ const AnalyticsDashboard = () => {
           )}
         </div>
 
-        {/* Quick Stats */}
+        {/* Recent Transactions */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-          <h3 className="text-sm font-semibold text-gray-800 mb-3">Quick Stats</h3>
-          <div className="space-y-2 text-xs">
-            <div className="flex justify-between">
-              <span className="text-gray-600">Avg. Monthly Spending</span>
-              <span className="font-semibold">₹{(analytics.creditVsDebit.debit / 12).toFixed(0)}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600">Largest Transaction</span>
-              <span className="font-semibold">₹25,000</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600">Transaction Count</span>
-              <span className="font-semibold">47</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600">Savings Rate</span>
-              <span className="font-semibold text-green-600">23%</span>
-            </div>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-semibold text-gray-800">Recent 3 Transactions</h3>
+            <a href="/transactions" className="text-xs font-medium text-blue-600 hover:underline">View all</a>
+          </div>
+          <div className="space-y-2 max-h-44 overflow-y-auto">
+            {recentTransactions.length > 0 ? (
+              <div className="text-xs space-y-2">
+                {recentTransactions.map((txn) => {
+                  const isCredit = txn.type === "credit";
+                  const isDebit = txn.type === "debit" || txn.type === "fix_deposit";
+                  const sign = isCredit ? "+" : isDebit ? "-" : "";
+                  const color = isCredit ? "text-green-600" : "text-red-600";
+                  const title = txn.remark || (isCredit ? "Credit" : "Debit");
+                  const time = txn.createdAt ? new Date(txn.createdAt).toLocaleString("en-IN", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }) : "";
+                  return (
+                    <div key={txn._id || `${txn.createdAt}-${txn.amount}`} className="flex justify-between items-center py-1.5 border-b border-gray-50 last:border-b-0">
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-gray-800 text-xs truncate">
+                          {title}
+                          {!txn.isSuccess && <span className="ml-2 text-[10px] text-amber-600 font-semibold">PENDING</span>}
+                        </p>
+                        <p className="text-gray-500 text-xs truncate">{time}</p>
+                      </div>
+                      <p className={`font-semibold text-xs ${color}`}>
+                        {sign}₹{Number(txn.amount || 0).toLocaleString()}
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="text-gray-500 text-xs">No recent transactions</p>
+            )}
           </div>
         </div>
 
-        {/* Goals & Targets */}
+        {/* Activity Health */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-          <h3 className="text-sm font-semibold text-gray-800 mb-3">Goals & Targets</h3>
-          <div className="space-y-3">
-            <div>
-              <div className="flex justify-between text-xs mb-1">
-                <span className="text-gray-600">Monthly Savings</span>
-                <span className="font-semibold">₹8,500 / ₹10,000</span>
-              </div>
-              <div className="w-full bg-gray-200 rounded-full h-1.5">
-                <div className="bg-green-500 h-1.5 rounded-full" style={{ width: '85%' }}></div>
-              </div>
+          <h3 className="text-sm font-semibold text-gray-800 mb-3">Account Health</h3>
+          <div className="space-y-3 text-xs">
+            <div className="flex items-center justify-between">
+              <span className="text-gray-600">Failed / pending txns (30d)</span>
+              <span className="font-semibold text-amber-600">
+                {tx30d.filter((t) => !t?.isSuccess).length}
+              </span>
             </div>
-            <div>
-              <div className="flex justify-between text-xs mb-1">
-                <span className="text-gray-600">Investment Goal</span>
-                <span className="font-semibold">₹50,000 / ₹1,00,000</span>
-              </div>
-              <div className="w-full bg-gray-200 rounded-full h-1.5">
-                <div className="bg-blue-500 h-1.5 rounded-full" style={{ width: '50%' }}></div>
-              </div>
+            <div className="flex items-center justify-between">
+              <span className="text-gray-600">Fixed deposits created (30d)</span>
+              <span className="font-semibold text-purple-600">{fd30d.length}</span>
+            </div>
+            <div className="rounded-lg bg-gray-50 border border-gray-200 p-3">
+              <p className="text-gray-700 font-semibold">Tip:</p>
+              <p className="text-gray-600 mt-1">
+                Review recent transactions regularly and report anything suspicious.
+              </p>
             </div>
           </div>
         </div>

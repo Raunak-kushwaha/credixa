@@ -79,10 +79,9 @@ const Transactions = () => {
     <>
 
 <div className="container py-10">
-            <HeaderName/>
 
            {/* Filters Section */}
-           <div className="bg-gradient-to-r from-white to-gray-50 rounded-2xl shadow-lg p-6 mb-6">
+           <div className="bg-gradient-to-r from-white to-gray-50 rounded-2xl border border-gray-200 p-6 mb-6">
             <h2 className="text-xl font-bold text-gray-800 mb-4">Filter Transactions</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-4">
               <div>
@@ -161,7 +160,7 @@ const Transactions = () => {
  <div className="px-3">
  <MessageShow/>
  </div>
-<table className="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400 border border rounded-lg overflow-hidden">
+<table className="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400 border border-gray-200 rounded-lg overflow-hidden">
     <thead className="text-xs text-gray-700 uppercase bg-gradient-to-r from-gray-100 via-gray-50 to-gray-100">
       <tr>
         <th scope="col" className="px-6 py-3 capitalize">

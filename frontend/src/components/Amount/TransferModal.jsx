@@ -9,7 +9,7 @@ import { IoMdClose } from 'react-icons/io';
 import { axiosClient } from '@/utils/AxiosClient';
 import { useMainContext } from '@/context/MainContext';
 
-export default function TransferModal({ id }) {
+export default function TransferModal({ id, children, className = "" }) {
   const { user, fetchUserProfile } = useMainContext();
   const [isOpen, setIsOpen] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
@@ -75,9 +75,15 @@ export default function TransferModal({ id }) {
 
   return (
     <>
-      <button type="button" onClick={openModal}>
-        <RiExchangeDollarFill className='text-3xl text-green-600 cursor-pointer hover:text-green-700 transition' />
-      </button>
+      {children ? (
+        <button type="button" onClick={openModal} className={className}>
+          {children}
+        </button>
+      ) : (
+        <button type="button" onClick={openModal}>
+          <RiExchangeDollarFill className='text-3xl text-green-600 cursor-pointer hover:text-green-700 transition' />
+        </button>
+      )}
 
       <Transition appear show={isOpen} as={Fragment}>
         <Dialog as="div" className="relative z-10" onClose={closeModal}>

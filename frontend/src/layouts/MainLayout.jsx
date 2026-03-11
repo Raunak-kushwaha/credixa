@@ -4,17 +4,17 @@ import { MainContextProvider } from '@/context/MainContext'
 import { store } from '@/redux/store';
 import React from 'react'
 import { Provider } from 'react-redux';
-import {ToastContainer} from 'react-toastify'
+import { ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 
 
-const MainLayout = ({children}) => {
+const MainLayout = ({ children }) => {
   return (
     <Provider store={store}>
       <MainContextProvider>
         <ToastContainer />
         <Navbar />
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-[calc(100vh-56px)] bg-gray-50">
           {children}
         </div>
       </MainContextProvider>

@@ -6,7 +6,7 @@ const { check } = require("express-validator");
 const { AccountModel } = require("../models/Account.model");
 const { TransactionModel } = require("../models/Transactions.model");
 class AuthService{
-    static async loginUser(body){
+    static async loginUser(body, req){
         const {email, password} = body
         const check_exist = await Usermodel.findOne({email: email})
         if (!check_exist){
@@ -26,6 +26,22 @@ class AuthService{
         const isMatch = await bcrypt.compare(password, check_exist.password)
         if (!isMatch){
             throw new ApiError(400, "Invalid password")
+        }
+
+        // track last login for activity log (non-blocking)
+        try {
+            const forwarded = (req.headers["x-forwarded-for"] || "").toString();
+            const ipFromHeader = forwarded.split(",")[0].trim();
+            const ip =
+                ipFromHeader ||
+                req.ip ||
+                (req.connection && req.connection.remoteAddress) ||
+                "";
+            check_exist.lastLoginAt = new Date();
+            check_exist.lastLoginIp = ip;
+            await check_exist.save();
+        } catch (e) {
+            // ignore tracking failures
         }
 
         const token = JWTService.generateToken(check_exist._id, check_exist.role)

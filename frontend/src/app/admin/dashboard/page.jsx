@@ -67,10 +67,15 @@ const AdminDashboard = () => {
   const [charts, setCharts] = useState({
     monthlyTransactions: [],
     userGrowth: [],
+    dailyTransactions: [],
+    dailyUserGrowth: [],
     transactionTypes: [],
     moneyFlow: { incoming: 0, outgoing: 0 },
   });
   const [pendingUsers, setPendingUsers] = useState(0);
+  const [activity, setActivity] = useState({ lastLoginAt: null, lastLoginIp: "" });
+  const [txView, setTxView] = useState("monthly"); // monthly | daily
+  const [userView, setUserView] = useState("monthly"); // monthly | daily
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
@@ -103,10 +108,18 @@ const AdminDashboard = () => {
               totalAmount: response.data.stats.totalMoneyInSystem ?? 0,
             });
           }
+          if (response.data.activity) {
+            setActivity({
+              lastLoginAt: response.data.activity.lastLoginAt || null,
+              lastLoginIp: response.data.activity.lastLoginIp || "",
+            });
+          }
           if (response.data.charts) {
             setCharts({
               monthlyTransactions: response.data.charts.monthlyTransactions ?? [],
               userGrowth: response.data.charts.userGrowth ?? [],
+              dailyTransactions: response.data.charts.dailyTransactions ?? [],
+              dailyUserGrowth: response.data.charts.dailyUserGrowth ?? [],
               transactionTypes: response.data.charts.transactionTypes ?? [],
               moneyFlow: response.data.charts.moneyFlow ?? { incoming: 0, outgoing: 0 },
             });
@@ -132,16 +145,16 @@ const AdminDashboard = () => {
   const userDelta = computeMonthDelta(charts.userGrowth);
 
 
-const StatCard = ({ title, value, bgColor, icon, link, subtitle, delta }) => {
+const StatCard = ({ title, value, icon, link, subtitle, delta }) => {
   const hasDelta = typeof delta === "number" && !Number.isNaN(delta);
   const isPositive = hasDelta && delta >= 0;
 
   return (
     <Link href={link} className="group block">
       <div
-        className={`${bgColor} rounded-xl shadow-sm p-5 flex flex-col gap-3 
+        className={`rounded-xl bg-white shadow-sm p-5 flex flex-col gap-3 
           transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 
-          border border-white/60 h-[160px]`}
+          border border-gray-100 h-[160px]`}
       >
         {/* Top row: icon + title */}
         <div className="flex items-center justify-between">
@@ -188,10 +201,40 @@ const StatCard = ({ title, value, bgColor, icon, link, subtitle, delta }) => {
   );
 };
 
-  const ChartCard = ({ title, children, viewLink, viewLabel }) => (
+  const SegmentedToggle = ({ value, onChange }) => (
+    <div className="inline-flex rounded-lg border border-gray-200 bg-gray-50 p-0.5">
+      <button
+        type="button"
+        onClick={() => onChange("monthly")}
+        className={`px-2.5 py-1 text-xs font-semibold rounded-md transition ${
+          value === "monthly"
+            ? "bg-white text-gray-900 shadow-sm"
+            : "text-gray-600 hover:text-gray-900"
+        }`}
+      >
+        Monthly
+      </button>
+      <button
+        type="button"
+        onClick={() => onChange("daily")}
+        className={`px-2.5 py-1 text-xs font-semibold rounded-md transition ${
+          value === "daily"
+            ? "bg-white text-gray-900 shadow-sm"
+            : "text-gray-600 hover:text-gray-900"
+        }`}
+      >
+        Daily
+      </button>
+    </div>
+  );
+
+  const ChartCard = ({ title, children, viewLink, viewLabel, headerLeft }) => (
     <div className="bg-white rounded-xl shadow-sm p-5 flex flex-col">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-gray-800">{title}</h3>
+        <div className="flex items-center gap-3">
+          <h3 className="text-lg font-semibold text-gray-800">{title}</h3>
+          {headerLeft}
+        </div>
         {viewLink && (
           <Link
             href={viewLink}
@@ -228,29 +271,69 @@ const StatCard = ({ title, value, bgColor, icon, link, subtitle, delta }) => {
         </p>
       </div>
 
-      {/* Action required - prominent CTA */}
-      <Link
-        href="/admin/pending-users"
-        className="mb-6 flex items-center justify-between gap-4 rounded-xl border border-amber-200 bg-amber-50 px-5 py-4 transition-colors hover:bg-amber-100 hover:border-amber-300"
-      >
-        <div className="flex items-center gap-3">
-          <div className="rounded-lg bg-amber-200/60 p-2">
-            <FaUsers className="text-amber-700 text-xl" />
-          </div>
-          <div>
-            <p className="font-semibold text-gray-800 flex items-center gap-2">
-              Review pending users
-              {pendingUsers > 0 && (
-                <span className="bg-red-500 text-white text-xs font-semibold px-2 py-0.5 rounded-full">
-                  {pendingUsers}
-                </span>
-              )}
-            </p>
-            <p className="text-sm text-gray-600">Approve or reject new signups</p>
-          </div>
+      {/* Action required + Activity log row */}
+<div className="mb-6 flex flex-col lg:flex-row gap-4">
+
+{/* Pending Users */}
+<Link
+  href="/admin/pending-users"
+  className="flex-1 flex items-center justify-between gap-4 rounded-xl border border-amber-200 bg-amber-50 px-5 py-4 hover:bg-amber-100 hover:border-amber-600 transition"
+>
+  <div className="flex items-center gap-3">
+    <div className="rounded-lg bg-amber-50 p-2">
+      <FaUsers className="text-amber-600 text-xl" />
+    </div>
+    <div>
+      <h2 className="text-sm font-semibold text-gray-800">Review pending users</h2>
+      <dl className="space-y-1 text-xs text-gray-600 mt-1">
+        <div className="flex gap-3">
+          <dt>Pending approvals</dt>
+          <dd className="font-medium text-gray-900">{pendingUsers} user{pendingUsers === 1 ? "" : "s"}</dd>
         </div>
-        <span className="text-amber-700 font-medium">Go to pending →</span>
-      </Link>
+      </dl>
+    </div>
+  </div>
+  <span className="text-sm font-medium text-amber-700 whitespace-nowrap">
+    Go to pending →
+  </span>
+</Link>
+
+{/* Activity Log */}
+<Link
+  href="/admin/login-activity"
+  className="flex-1 flex items-center justify-between gap-4 rounded-xl border border-gray-200 bg-white px-5 py-4 hover:bg-gray-50 hover:border-gray-300 transition"
+>
+  <div className="flex items-center gap-3">
+    <div className="rounded-lg bg-blue-50 p-2">
+      <FaExchangeAlt className="text-blue-600 text-xl" />
+    </div>
+    <div>
+      <h2 className="text-sm font-semibold text-gray-800">Activity log</h2>
+      <dl className="space-y-1 text-xs text-gray-600 mt-1">
+        <div className="flex gap-3">
+          <dt>Admin last login</dt>
+          <dd className="font-medium text-gray-900">
+            {activity.lastLoginAt
+              ? new Date(activity.lastLoginAt).toLocaleString("en-IN", {
+                  day: "2-digit", month: "short", year: "numeric",
+                  hour: "2-digit", minute: "2-digit",
+                })
+              : "Not available"}
+          </dd>
+        </div>
+        <div className="flex gap-3">
+          <dt>Admin IP</dt>
+          <dd className="font-mono text-[11px] text-gray-900">{activity.lastLoginIp || "Not recorded"}</dd>
+        </div>
+      </dl>
+    </div>
+  </div>
+  <span className="text-[14px] font-medium text-blue-600 whitespace-nowrap">
+    View user logins →
+  </span>
+</Link>
+
+</div>
 
       {/* Stats Grid - clickable, drill-down */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
@@ -259,7 +342,6 @@ const StatCard = ({ title, value, bgColor, icon, link, subtitle, delta }) => {
           value={stats.totalUsers}
           subtitle={userDelta ? `New in ${userDelta.label}: ${userDelta.current}` : "All-time users"}
           delta={userDelta?.change ?? null}
-          bgColor="bg-gradient-to-br from-blue-50 to-blue-100"
           icon={<FaUsers />}
           link="/admin/users"
         />
@@ -268,7 +350,6 @@ const StatCard = ({ title, value, bgColor, icon, link, subtitle, delta }) => {
           value={stats.totalAccounts}
            subtitle="All-time accounts"
            delta={null}
-          bgColor="bg-gradient-to-br from-green-50 to-green-100"
           icon={<FaCreditCard />}
           link="/admin/accounts"
         />
@@ -277,7 +358,6 @@ const StatCard = ({ title, value, bgColor, icon, link, subtitle, delta }) => {
           value={stats.totalTransactions}
           subtitle={txDelta ? `Tx in ${txDelta.label}: ${txDelta.current}` : "All-time transactions"}
           delta={txDelta?.change ?? null}
-          bgColor="bg-gradient-to-br from-purple-50 to-purple-100"
           icon={<FaExchangeAlt />}
           link="/admin/transactions"
         />
@@ -286,7 +366,6 @@ const StatCard = ({ title, value, bgColor, icon, link, subtitle, delta }) => {
           value={stats.totalFixDeposits}
           subtitle="Active fixed deposits"
           delta={null}
-          bgColor="bg-gradient-to-br from-yellow-50 to-yellow-100"
           icon={<FaLock />}
           link="/admin/fds"
         />
@@ -295,7 +374,6 @@ const StatCard = ({ title, value, bgColor, icon, link, subtitle, delta }) => {
           value={`₹${stats.totalAmount?.toLocaleString() || 0}`}
           subtitle="Money in system"
           delta={null}
-          bgColor="bg-gradient-to-br from-indigo-50 to-indigo-100"
           icon={<FaMoneyBillWave />}
           link="/admin/accounts"
         />
@@ -309,12 +387,17 @@ const StatCard = ({ title, value, bgColor, icon, link, subtitle, delta }) => {
             title="Monthly Transactions"
             viewLink="/admin/transactions"
             viewLabel="View transactions"
+            headerLeft={<SegmentedToggle value={txView} onChange={setTxView} />}
           >
             <div className="h-72">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={charts.monthlyTransactions}>
+                <BarChart data={txView === "daily" ? charts.dailyTransactions : charts.monthlyTransactions}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                  <XAxis dataKey="month" tick={{ fontSize: 12 }} stroke="#6b7280" />
+                  <XAxis
+                    dataKey={txView === "daily" ? "day" : "month"}
+                    tick={{ fontSize: 12 }}
+                    stroke="#6b7280"
+                  />
                   <YAxis tick={{ fontSize: 12 }} stroke="#6b7280" />
                   <Tooltip
                     contentStyle={{ borderRadius: "8px", border: "1px solid #e5e7eb" }}
@@ -330,12 +413,17 @@ const StatCard = ({ title, value, bgColor, icon, link, subtitle, delta }) => {
             title="User Growth"
             viewLink="/admin/users"
             viewLabel="View users"
+            headerLeft={<SegmentedToggle value={userView} onChange={setUserView} />}
           >
             <div className="h-72">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={charts.userGrowth}>
+                <LineChart data={userView === "daily" ? charts.dailyUserGrowth : charts.userGrowth}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                  <XAxis dataKey="month" tick={{ fontSize: 12 }} stroke="#6b7280" />
+                  <XAxis
+                    dataKey={userView === "daily" ? "day" : "month"}
+                    tick={{ fontSize: 12 }}
+                    stroke="#6b7280"
+                  />
                   <YAxis tick={{ fontSize: 12 }} stroke="#6b7280" />
                   <Tooltip
                     contentStyle={{ borderRadius: "8px", border: "1px solid #e5e7eb" }}

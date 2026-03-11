@@ -151,10 +151,17 @@ class AdminService {
         };
     }
 
-    static async getAnalytics() {
+    static async getAnalytics(adminId) {
         const currentYear = new Date().getFullYear();
         const startOfYear = new Date(currentYear, 0, 1);
         const endOfYear = new Date(currentYear, 11, 31, 23, 59, 59, 999);
+        const endOfDay = new Date();
+        endOfDay.setHours(23, 59, 59, 999);
+        const start30Days = new Date(endOfDay);
+        start30Days.setDate(start30Days.getDate() - 29);
+        start30Days.setHours(0, 0, 0, 0);
+
+        const adminDoc = adminId ? await Usermodel.findById(adminId).select("lastLoginAt lastLoginIp") : null;
 
         const [
             totalUsers,
@@ -164,6 +171,8 @@ class AdminService {
             balanceResult,
             monthlyTxResult,
             userGrowthResult,
+            dailyTxResult,
+            dailyUserGrowthResult,
             transactionTypesResult,
             moneyFlowResult
         ] = await Promise.all([
@@ -186,6 +195,26 @@ class AdminService {
                 { $sort: { _id: 1 } }
             ]),
             TransactionModel.aggregate([
+                { $match: { createdAt: { $gte: start30Days, $lte: endOfDay } } },
+                {
+                    $group: {
+                        _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+                        total: { $sum: 1 }
+                    }
+                },
+                { $sort: { _id: 1 } }
+            ]),
+            Usermodel.aggregate([
+                { $match: { createdAt: { $gte: start30Days, $lte: endOfDay } } },
+                {
+                    $group: {
+                        _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+                        total: { $sum: 1 }
+                    }
+                },
+                { $sort: { _id: 1 } }
+            ]),
+            TransactionModel.aggregate([
                 { $group: { _id: "$type", count: { $sum: 1 } } }
             ]),
             TransactionModel.aggregate([
@@ -200,6 +229,11 @@ class AdminService {
 
         const totalMoneyInSystem = balanceResult[0]?.total ?? 0;
 
+        const activity = {
+            lastLoginAt: adminDoc?.lastLoginAt || null,
+            lastLoginIp: adminDoc?.lastLoginIp || ""
+        };
+
         const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
         const monthMap = (arr) => {
             const byMonth = Object.fromEntries(arr.map(({ _id, total }) => [_id, total]));
@@ -211,6 +245,20 @@ class AdminService {
 
         const monthlyTransactions = monthMap(monthlyTxResult);
         const userGrowth = monthMap(userGrowthResult);
+        const dailyTransactions = dailyTxResult.map(({ _id, total }) => {
+            const d = new Date(`${_id}T00:00:00.000Z`);
+            return {
+                day: d.toLocaleDateString("en-US", { month: "short", day: "2-digit" }),
+                total
+            };
+        });
+        const dailyUserGrowth = dailyUserGrowthResult.map(({ _id, total }) => {
+            const d = new Date(`${_id}T00:00:00.000Z`);
+            return {
+                day: d.toLocaleDateString("en-US", { month: "short", day: "2-digit" }),
+                total
+            };
+        });
         const transactionTypes = transactionTypesResult.map(({ _id, count }) => ({
             type: _id,
             count
@@ -235,9 +283,12 @@ class AdminService {
             charts: {
                 monthlyTransactions,
                 userGrowth,
+                dailyTransactions,
+                dailyUserGrowth,
                 transactionTypes,
                 moneyFlow
-            }
+            },
+            activity
         };
     }
 
@@ -265,6 +316,22 @@ class AdminService {
                 totalFixDeposits: fixDepositCount,
                 totalAmount: totalAmount[0]?.total || 0
             }
+        };
+    }
+
+    static async getUserLoginActivity(limit = 50) {
+        const size = Number.isNaN(Number(limit)) ? 50 : Math.min(Number(limit), 200);
+        const users = await Usermodel.find({
+            role: "user",
+            lastLoginAt: { $ne: null }
+        })
+            .select("name email lastLoginAt lastLoginIp isApproved isFreezed")
+            .sort({ lastLoginAt: -1 })
+            .limit(size);
+
+        return {
+            count: users.length,
+            users
         };
     }
 

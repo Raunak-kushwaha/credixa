@@ -59,7 +59,7 @@ class AdminController {
 
     static async getAnalytics(req, res) {
         try {
-            const res_obj = await AdminService.getAnalytics();
+            const res_obj = await AdminService.getAnalytics(req.user);
             res.status(200).send(res_obj);
         } catch (error) {
             throw error;
@@ -145,6 +145,16 @@ class AdminController {
             const p = page ? parseInt(page) : 1;
             const l = limit ? parseInt(limit) : 50;
             const res_obj = await AdminService.getActivityLogs(p, l);
+            res.status(200).send(res_obj);
+        } catch (error) {
+            throw error;
+        }
+    }
+
+    static async getUserLoginActivity(req, res) {
+        try {
+            const { limit } = req.query;
+            const res_obj = await AdminService.getUserLoginActivity(limit || 50);
             res.status(200).send(res_obj);
         } catch (error) {
             throw error;
