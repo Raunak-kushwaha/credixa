@@ -255,7 +255,7 @@ const AdminDashboard = () => {
   }
 
   return (
-    <main className="max-w-7xl mx-auto px-4">
+    <main className="max-w-7xl mx-auto px-4 py-5">
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-2xl lg:text-3xl font-bold text-gray-800">Dashboard</h1>

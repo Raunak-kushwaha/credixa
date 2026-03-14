@@ -110,7 +110,7 @@ function ProfileDropdown({ user, onLogout, isAdmin }) {
             </MenuItem>
           )}
           <MenuItem>
-              <button
+            <button
               onClick={onLogout}
               className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50"
             >
@@ -132,8 +132,8 @@ export default function Navbar() {
   const isAuthPage = pathname === "/login" || pathname === "/register";
   const isAdminLogin = pathname === "/admin/login";
   const isAdminArea = pathname.startsWith("/admin") && !isAdminLogin;
-  const isUserArea = pathname === "/" || pathname.startsWith("/amount") || 
-    pathname.startsWith("/transactions") || pathname.startsWith("/fd-amount") || 
+  const isUserArea = pathname === "/" || pathname.startsWith("/amount") ||
+    pathname.startsWith("/transactions") || pathname.startsWith("/fd-amount") ||
     pathname.startsWith("/profile");
   const isAdmin = user?.role === "admin" || (typeof window !== "undefined" && localStorage.getItem("role") === "admin");
 
@@ -188,7 +188,7 @@ export default function Navbar() {
       <header className="w-full border-b border-gray-200 bg-white shadow-sm">
         <div className="mx-auto max-w-[1600px] px-4 sm:px-6">
           <nav className="flex h-14 items-center justify-between gap-4">
-            <div className="flex min-w-0 items-center gap-6">
+            <div className="flex min-w-0 items-center gap-45">
               <Logo href="/admin/dashboard" variant="dark" />
               <div className="hidden flex-1 md:flex">
                 {ADMIN_TABS.map((tab) => {
@@ -200,11 +200,10 @@ export default function Navbar() {
                     <Link
                       key={tab.href}
                       href={tab.href}
-                      className={`whitespace-nowrap border-b-2 px-3 py-3 text-sm font-medium transition-colors ${
-                        isActive
-                          ? "border-indigo-600 text-indigo-600"
-                          : "border-transparent text-gray-600 hover:border-gray-300 hover:text-gray-900"
-                      }`}
+                      className={`whitespace-nowrap border-b-2 px-3 py-3 text-sm font-medium transition-colors ${isActive
+                        ? "border-indigo-600 text-indigo-600"
+                        : "border-transparent text-gray-600 hover:border-gray-300 hover:text-gray-900"
+                        }`}
                     >
                       {tab.label}
                     </Link>
@@ -232,28 +231,28 @@ export default function Navbar() {
     return (
       <header className="w-full border-b border-gray-200 bg-white shadow-sm">
         <div className="mx-auto max-w-[1600px] px-4 sm:px-6">
-        <nav className="flex h-14 items-center justify-between gap-4">
-          <div className="flex items-center gap-4 min-w-0">
-            <button
-              onClick={() => dispatch(setIsToggled())}
-              className="rounded-lg p-2 text-gray-600 hover:bg-gray-100 lg:hidden"
-              aria-label="Toggle menu"
-            >
-              <SlMenu className="h-5 w-5" />
-            </button>
-            <Logo href="/" variant="dark" className="flex-shrink-0" />
-            <UserBreadcrumbs pathname={pathname} />
-          </div>
+          <nav className="flex h-14 items-center justify-between gap-4">
+            <div className="flex items-center gap-45 min-w-0">
+              <button
+                onClick={() => dispatch(setIsToggled())}
+                className="rounded-lg p-2 text-gray-600 hover:bg-gray-100 lg:hidden"
+                aria-label="Toggle menu"
+              >
+                <SlMenu className="h-5 w-5" />
+              </button>
+              <Logo href="/" variant="dark" className="flex-shrink-0" />
+              <UserBreadcrumbs pathname={pathname} />
+            </div>
 
-          <div className="flex items-center gap-3 sm:gap-4 flex-1 justify-end">
-            <NavbarSearch isAdmin={false} />
-            <ProfileDropdown
-              user={user}
-              onLogout={LogoutHandler}
-              isAdmin={false}
-            />
-          </div>
-        </nav>
+            <div className="flex items-center gap-3 sm:gap-4 flex-1 justify-end">
+              <NavbarSearch isAdmin={false} />
+              <ProfileDropdown
+                user={user}
+                onLogout={LogoutHandler}
+                isAdmin={false}
+              />
+            </div>
+          </nav>
         </div>
       </header>
     );

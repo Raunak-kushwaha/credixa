@@ -7,15 +7,14 @@ import { usePathname, useRouter } from 'next/navigation';
 import React, { useEffect, useState } from 'react'
 import { Sidebar, Menu, MenuItem, SubMenu } from "react-pro-sidebar";
 import { useDispatch, useSelector } from 'react-redux';
-import {MdDashboard} from 'react-icons/md'
-import { LuSquareUser } from "react-icons/lu"
+import { MdDashboard } from 'react-icons/md'
 import { GrCurrency } from "react-icons/gr";
 import { MdOutlineReceiptLong } from "react-icons/md";
 import { PiHandCoinsBold } from "react-icons/pi";
 
 
 
-const RootTemplate = ({children}) => {
+const RootTemplate = ({ children }) => {
   const { user } = useMainContext()
   const [loading, setLoading] = useState(true)
 
@@ -23,18 +22,18 @@ const RootTemplate = ({children}) => {
   const isToggled = useSelector(SidebarSlicePath)
   const dispatch = useDispatch()
 
-  useEffect(()=>{
-    if(!user){
+  useEffect(() => {
+    if (!user) {
       router.push("/login")
 
-    }else{
+    } else {
       setLoading(false)
     }
-  },[user, router, setLoading])
+  }, [user, router, setLoading])
 
-  if(loading){
+  if (loading) {
     return <div className='min-h-screen flex items-center justify-center'>
-      <Loader/>
+      <Loader />
     </div>
   }
 
@@ -67,29 +66,24 @@ const RootTemplate = ({children}) => {
         className="!border-r !border-gray-200"
       >
         <Menu className="!bg-white !min-h-screen !border-0 px-3 py-4">
-            <CustomMenu link={"/"} text={"Home"} Icon={MdDashboard} />
-            <CustomMenu link={"/amount"} text={"Funds"} Icon={GrCurrency} />
-            <CustomMenu
-              link={"/transactions"}
-              text={"Transactions"}
-              Icon={MdOutlineReceiptLong}
-            />
-            <CustomMenu
-              link={"/fd-amount"}
-              text={"Fix Deposit"}
-              Icon={PiHandCoinsBold}
-            />
+          <CustomMenu link={"/"} text={"Dashboard"} Icon={MdDashboard} />
+          <CustomMenu link={"/amount"} text={"Funds"} Icon={GrCurrency} />
+          <CustomMenu
+            link={"/transactions"}
+            text={"Transactions"}
+            Icon={MdOutlineReceiptLong}
+          />
+          <CustomMenu
+            link={"/fd-amount"}
+            text={"Fix Deposit"}
+            Icon={PiHandCoinsBold}
+          />
 
-            <CustomMenu
-              link={"/profile"}
-              text={"Profile"}
-              Icon={LuSquareUser}
-            />
-          </Menu>
+        </Menu>
       </Sidebar>
       <main className="flex-1 px-4 md:px-6">{children}</main>
     </section>
-    
+
   );
 }
 

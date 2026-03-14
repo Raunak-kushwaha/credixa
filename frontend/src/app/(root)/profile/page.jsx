@@ -5,10 +5,12 @@ import { useMainContext } from "@/context/MainContext";
 import { axiosClient } from "@/utils/AxiosClient";
 import { toast } from "react-toastify";
 import {
-  User, Mail, CreditCard, Shield, Clock, PenLine,
+  User, Mail, CreditCard, Clock, PenLine,
   Save, X, Eye, EyeOff, Wallet, CheckCircle2, AlertTriangle, Loader2
 } from "lucide-react";
 import { RiUser5Line, RiShieldUserLine } from "react-icons/ri";
+import { PiPassword } from "react-icons/pi";
+import { GoShieldLock } from "react-icons/go";
 
 function InfoRow({ icon: Icon, label, value, badge }) {
   return (
@@ -155,11 +157,11 @@ export default function ProfilePage() {
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
 
         {/* ── Profile Header — full width ── */}
-        <div className="md:col-span-3 overflow-hidden rounded-xl border border-gray-200 bg-slate-200 p-6 shadow-sm">
+        <div className="md:col-span-3 overflow-hidden rounded-xl border border-gray-300 bg-slate-200 p-6 shadow-sm">
           <div className="flex items-center gap-5">
             <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-2xl bg-white/20 text-white backdrop-blur-sm shadow-lg">
               {user.role === 'admin' ? (
-                <RiShieldUserLine className="h-10 w-10 text-indigo-600" />
+                <GoShieldLock className="h-10 w-10 text-indigo-600" />
               ) : (
                 <RiUser5Line className="h-10 w-10 text-indigo-600" />
               )}
@@ -263,7 +265,7 @@ export default function ProfilePage() {
 
           <div className="overflow-hidden rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
             <div className="mb-1 flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-gray-400">
-              <Shield className="h-3.5 w-3.5" /> Status
+              <GoShieldLock className="h-3.5 w-3.5" /> Status
             </div>
             <div className="mt-1">{statusBadge}</div>
           </div>
@@ -273,7 +275,7 @@ export default function ProfilePage() {
         <div className="md:col-span-3">
           <SectionCard
             title="Security"
-            icon={Shield}
+            icon={GoShieldLock}
             headerRight={
               !showPwSection ? (
                 <button
@@ -381,7 +383,7 @@ export default function ProfilePage() {
               <div className="flex flex-wrap gap-6">
                 <div className="flex items-start gap-3">
                   <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-gray-100 text-gray-500">
-                    <Shield className="h-4 w-4" />
+                    <PiPassword className="h-4 w-4" />
                   </div>
                   <div>
                     <p className="text-xs font-medium uppercase tracking-wide text-gray-400">Password</p>
