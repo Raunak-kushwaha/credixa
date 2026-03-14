@@ -16,6 +16,12 @@ router.route("/register")
 
 router.route("/profile")
 .get(AuthMiddleware,AuthController.profileUser)
+.put(AuthMiddleware,AuthController.updateProfile)
 
+router.route("/change-password")
+.put(AuthMiddleware,AuthController.changePassword)
+
+router.route("/settings")
+.get(AuthMiddleware,AuthController.getSettings)
 
 module.exports = router

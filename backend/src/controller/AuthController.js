@@ -17,5 +17,21 @@ class AuthController{
         res.status(200).send(res_obj)
     }
 
+    static async getSettings(req,res){
+        const AdminService = require("../service/AdminService");
+        const res_obj = await AdminService.getSettings();
+        res.status(200).send(res_obj)
+    }
+
+    static async updateProfile(req,res){
+        const res_obj = await AuthService.updateProfile(req.user, req.body);
+        res.status(200).send(res_obj)
+    }
+
+    static async changePassword(req,res){
+        const res_obj = await AuthService.changePassword(req.user, req.body);
+        res.status(200).send(res_obj)
+    }
+
 }
 module.exports = AuthController

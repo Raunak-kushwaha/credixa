@@ -112,5 +112,43 @@ profile_obj ['amount']= account.amount
     return { ...userd.toObject(), ...profile_obj };
 }
 
+    static async updateProfile(userId, body) {
+        const { name } = body;
+        if (!name || !name.trim()) {
+            throw new ApiError(400, "Name is required");
+        }
+
+        const user = await Usermodel.findById(userId);
+        if (!user) throw new ApiError(404, "User not found");
+
+        user.name = name.trim();
+        await user.save();
+
+        return { msg: "Profile updated successfully" };
+    }
+
+    static async changePassword(userId, body) {
+        const { currentPassword, newPassword } = body;
+        if (!currentPassword || !newPassword) {
+            throw new ApiError(400, "Current password and new password are required");
+        }
+
+        if (newPassword.length < 6) {
+            throw new ApiError(400, "New password must be at least 6 characters");
+        }
+
+        const user = await Usermodel.findById(userId);
+        if (!user) throw new ApiError(404, "User not found");
+
+        const isMatch = await bcrypt.compare(currentPassword, user.password);
+        if (!isMatch) {
+            throw new ApiError(400, "Current password is incorrect");
+        }
+
+        user.password = newPassword;
+        await user.save();
+
+        return { msg: "Password changed successfully" };
+    }
     }
 module.exports = AuthService

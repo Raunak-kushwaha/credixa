@@ -230,22 +230,58 @@ static async getAllTransactions(user, filters = {}, page = 1, limit = 50){
             if (!receiverAccount) {
                 throw new ApiError(400, "Receiver account not found");
             }
+
+            // [NEW] Fetch Global Settings & Enforce Limits/Fees
+            const { SettingsModel } = require("../models/Settings.model");
+            let settings = usingTransaction
+                ? await SettingsModel.findOne().session(session)
+                : await SettingsModel.findOne();
+            if (!settings) {
+                settings = await SettingsModel.create({});
+            }
+
+            const senderTier = senderUser.ac_type || 'saving';
+            const tierSettings = settings.tiers[senderTier];
+            if (!tierSettings) {
+                throw new ApiError(500, "Invalid tier configuration");
+            }
+
+            // 1. Enforce Daily Limit
+            const todayStart = new Date();
+            todayStart.setHours(0, 0, 0, 0);
+            
+            // Calculate total sent today by this sender
+            const todayTransfers = usingTransaction
+                ? await TransactionModel.find({ user: senderId, type: 'debit', isSuccess: true, createdAt: { $gte: todayStart } }).session(session)
+                : await TransactionModel.find({ user: senderId, type: 'debit', isSuccess: true, createdAt: { $gte: todayStart } });
+            
+            const totalSentToday = todayTransfers.reduce((sum, tx) => sum + tx.amount, 0);
+
+            if ((totalSentToday + transferAmount) > tierSettings.dailyTransferLimit) {
+                throw new ApiError(400, `Daily transfer limit of ₹${tierSettings.dailyTransferLimit} exceeded for ${senderTier} account. You have already sent ₹${totalSentToday} today.`);
+            }
+
+            // 2. Calculate Fee
+            const feePercent = tierSettings.transferFeePercent || 0;
+            const feeAmount = Math.round(transferAmount * (feePercent / 100));
+            const totalDeduction = transferAmount + feeAmount;
+
             // If we can use transactions, perform the safe transactional flow.
             if (usingTransaction) {
                 // balance check
-                if (senderAccount.amount < transferAmount) {
-                    throw new ApiError(400, "Insufficient balance");
+                if (senderAccount.amount < totalDeduction) {
+                    throw new ApiError(400, `Insufficient balance. Transfer amount: ₹${transferAmount}, Fee: ₹${feeAmount}, Total required: ₹${totalDeduction}`);
                 }
 
                 // perform updates
-                senderAccount.amount -= transferAmount;
+                senderAccount.amount -= totalDeduction;
                 receiverAccount.amount += transferAmount;
 
                 await senderAccount.save({ session });
                 await receiverAccount.save({ session });
 
                 // create transaction records
-                await TransactionModel.create([
+                const txnsToCreate = [
                     {
                         account: senderAccount._id,
                         user: senderId,
@@ -262,7 +298,20 @@ static async getAllTransactions(user, filters = {}, page = 1, limit = 50){
                         isSuccess: true,
                         remark: `Transfer from ${senderUser.email}`
                     }
-                ], { session });
+                ];
+
+                if (feeAmount > 0) {
+                    txnsToCreate.push({
+                        account: senderAccount._id,
+                        user: senderId,
+                        amount: feeAmount,
+                        type: 'debit',
+                        isSuccess: true,
+                        remark: `Platform Transfer Fee (${feePercent}%)`
+                    });
+                }
+
+                await TransactionModel.create(txnsToCreate, { session });
 
                 await session.commitTransaction();
                 session.endSession();
@@ -277,13 +326,13 @@ static async getAllTransactions(user, filters = {}, page = 1, limit = 50){
             // FALLBACK FLOW (no transactions available):
             // 1) Atomically decrement sender balance only if sufficient funds
             const updatedSender = await AccountModel.findOneAndUpdate(
-                { user: senderId, amount: { $gte: transferAmount } },
-                { $inc: { amount: -transferAmount } },
+                { user: senderId, amount: { $gte: totalDeduction } },
+                { $inc: { amount: -totalDeduction } },
                 { new: true }
             );
 
             if (!updatedSender) {
-                throw new ApiError(400, "Insufficient balance");
+                throw new ApiError(400, `Insufficient balance. Transfer amount: ₹${transferAmount}, Fee: ₹${feeAmount}, Total required: ₹${totalDeduction}`);
             }
 
             // 2) Increment receiver balance
@@ -295,12 +344,12 @@ static async getAllTransactions(user, filters = {}, page = 1, limit = 50){
 
             if (!updatedReceiver) {
                 // rollback sender
-                await AccountModel.findByIdAndUpdate(updatedSender._id, { $inc: { amount: transferAmount } });
+                await AccountModel.findByIdAndUpdate(updatedSender._id, { $inc: { amount: totalDeduction } });
                 throw new ApiError(500, "Transfer failed while crediting receiver");
             }
 
             // 3) record transactions (non-transactional)
-            await TransactionModel.create([
+            const txnsToCreateFallback = [
                 {
                     account: updatedSender._id,
                     user: senderId,
@@ -317,11 +366,25 @@ static async getAllTransactions(user, filters = {}, page = 1, limit = 50){
                     isSuccess: true,
                     remark: `Transfer from ${senderUser.email}`
                 }
-            ]);
+            ];
+
+            if (feeAmount > 0) {
+                txnsToCreateFallback.push({
+                    account: updatedSender._id,
+                    user: senderId,
+                    amount: feeAmount,
+                    type: 'debit',
+                    isSuccess: true,
+                    remark: `Platform Transfer Fee (${feePercent}%)`
+                });
+            }
+
+            await TransactionModel.create(txnsToCreateFallback);
 
             return {
                 msg: "Transfer successful",
                 amount: transferAmount,
+                fee: feeAmount,
                 receiverEmail
             };
         } catch (error) {

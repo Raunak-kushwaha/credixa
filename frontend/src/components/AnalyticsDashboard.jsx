@@ -204,7 +204,7 @@ const AnalyticsDashboard = () => {
           {transactionView === 'monthly' ? (
             analytics.monthlyTransactions.length > 0 ? (
               <ResponsiveContainer width="100%" height={180}>
-                <LineChart data={analytics.monthlyTransactions} margin={{ top: 5, right: 5, left: 5, bottom: 0 }}>
+                <LineChart data={analytics.monthlyTransactions} margin={{ top: 5, right: 5, left: 20, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
                   <XAxis
                     dataKey="month"
@@ -244,7 +244,7 @@ const AnalyticsDashboard = () => {
           ) : (
             dailyTransactions.length > 0 ? (
               <ResponsiveContainer width="100%" height={180}>
-                <LineChart data={dailyTransactions} margin={{ top: 5, right: 5, left: 5, bottom: 0 }}>
+                <LineChart data={dailyTransactions} margin={{ top: 5, right: 5, left: 20, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
                   <XAxis
                     dataKey="day"
@@ -286,22 +286,22 @@ const AnalyticsDashboard = () => {
 
         {/* Quick Stats - Top Right */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-          <h3 className="text-sm font-semibold text-gray-800 mb-3">Quick Stats</h3>
+          <h3 className="text-sm font-semibold text-gray-800 mb-3">Quick Stats (30Days)</h3>
           <div className="space-y-2 text-xs">
             <div className="flex justify-between">
-              <span className="text-gray-600">Money In (30d)</span>
+              <span className="text-gray-600">Money In</span>
               <span className="font-semibold text-green-600">₹{totalCredit30d.toLocaleString()}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-600">Money Out (30d)</span>
+              <span className="text-gray-600">Money Out</span>
               <span className="font-semibold text-red-600">₹{(totalDebit30d + totalFd30d).toLocaleString()}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-600">Txns (30d)</span>
+              <span className="text-gray-600">Txns</span>
               <span className="font-semibold">{successful30d.length}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-600">Largest txn (30d)</span>
+              <span className="text-gray-600">Largest txn</span>
               <span className="font-semibold">
                 ₹{Number(largestTxn?.amount || 0).toLocaleString()}
               </span>
@@ -311,8 +311,8 @@ const AnalyticsDashboard = () => {
 
         {/* Spending Breakdown - Bottom Right */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-semibold text-gray-800">Money Out (last 30 days)</h3>
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-sm font-semibold text-gray-800">Money Out (30Days)</h3>
             <button
               onClick={() => handleViewChange('daily')}
               className="text-xs font-medium text-blue-600 hover:underline"

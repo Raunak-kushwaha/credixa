@@ -15,10 +15,37 @@ export default function TransferModal({ id, children, className = "" }) {
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [transferData, setTransferData] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [platformSettings, setPlatformSettings] = useState(null);
+
+  // Fetch settings when modal opens
+  const fetchSettings = async () => {
+    try {
+      const resp = await axiosClient.get("/auth/settings", {
+        headers: { Authorization: "Bearer " + localStorage.getItem("token") },
+      });
+      if (resp.data?.settings) {
+        setPlatformSettings(resp.data.settings);
+      }
+    } catch (err) {
+      console.log("Could not load settings", err);
+    }
+  };
+
+  const getFeePercent = () => {
+    if (!platformSettings || !user) return 0;
+    const tier = user.ac_type || "saving";
+    return platformSettings.tiers?.[tier]?.transferFeePercent || 0;
+  };
+
+  const getDailyLimit = () => {
+    if (!platformSettings || !user) return Infinity;
+    const tier = user.ac_type || "saving";
+    return platformSettings.tiers?.[tier]?.dailyTransferLimit || Infinity;
+  };
 
   const initial_state = {
     receiverEmail: '',
-    amount: 0
+    amount: ''
   };
 
   const validationSchema = yup.object({
@@ -71,6 +98,7 @@ export default function TransferModal({ id, children, className = "" }) {
 
   function openModal() {
     setIsOpen(true);
+    fetchSettings();
   }
 
   return (
@@ -96,7 +124,7 @@ export default function TransferModal({ id, children, className = "" }) {
             leaveFrom="opacity-100"
             leaveTo="opacity-0"
           >
-            <div className="fixed inset-0 bg-black/25" />
+            <div className="fixed inset-0 bg-black/40 backdrop-blur-sm transition-opacity" />
           </Transition.Child>
 
           <div className="fixed inset-0 overflow-y-auto">
@@ -115,7 +143,7 @@ export default function TransferModal({ id, children, className = "" }) {
                     as="h3"
                     className="text-2xl font-bold text-gray-900 flex items-center justify-between mb-6"
                   >
-                    <span>💸 Transfer Money</span>
+                    <span>Transfer Money</span>
                     <button onClick={closeModal} className='p-2 bg-gray-100 hover:bg-gray-200 rounded-full cursor-pointer transition'>
                       <IoMdClose className='text-2xl' />
                     </button>
@@ -134,11 +162,11 @@ export default function TransferModal({ id, children, className = "" }) {
                           {/* Receiver Email */}
                           <div>
                             <label className='block text-sm font-semibold text-gray-700 mb-2'>Receiver Email</label>
-                            <Field 
-                              name="receiverEmail" 
-                              type="email" 
-                              className='w-full px-4 py-3 border border-gray-300 rounded-lg outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition' 
-                              placeholder='friend@example.com' 
+                            <Field
+                              name="receiverEmail"
+                              type="email"
+                              className='w-full px-4 py-3 border border-gray-300 rounded-lg outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition'
+                              placeholder='friend@example.com'
                             />
                             {errors.receiverEmail && touched.receiverEmail && (
                               <p className='text-red-500 text-sm mt-1'>{errors.receiverEmail}</p>
@@ -150,11 +178,11 @@ export default function TransferModal({ id, children, className = "" }) {
                             <label className='block text-sm font-semibold text-gray-700 mb-2'>Amount</label>
                             <div className='flex items-center gap-2 border border-gray-300 rounded-lg px-4 py-3 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-200'>
                               <RiExchangeDollarFill className='text-2xl text-gray-400' />
-                              <Field 
-                                name="amount" 
-                                type="number" 
-                                className='w-full text-lg outline-none border-none bg-transparent' 
-                                placeholder='0' 
+                              <Field
+                                name="amount"
+                                type="number"
+                                className='w-full text-lg outline-none border-none bg-transparent'
+                                placeholder='0'
                               />
                             </div>
                             {errors.amount && touched.amount && (
@@ -184,20 +212,37 @@ export default function TransferModal({ id, children, className = "" }) {
                           {values.amount && values.receiverEmail && (
                             <div className='bg-gray-50 rounded-lg p-4 border border-gray-200'>
                               <p className='text-xs text-gray-600 font-medium mb-2'>TRANSFER PREVIEW</p>
-                              <p className='text-gray-700'>
-                                You are sending <span className='font-bold'>₹{values.amount}</span> to <span className='font-bold'>{values.receiverEmail}</span>
+                              <p className='text-gray-700 mb-1'>
+                                Sending: <span className='font-bold'>₹{values.amount}</span> to <span className='font-bold'>{values.receiverEmail}</span>
                               </p>
+                              {getFeePercent() > 0 && (
+                                <p className='text-gray-600 text-sm'>
+                                  Platform Fee ({getFeePercent()}%): <span className='font-medium text-red-500'>+₹{Math.round(Number(values.amount) * (getFeePercent() / 100))}</span>
+                                </p>
+                              )}
+                              <div className='mt-2 pt-2 border-t border-gray-200'>
+                                <p className='text-gray-900 font-semibold'>
+                                  Total Deduction: ₹{Number(values.amount) + Math.round(Number(values.amount) * (getFeePercent() / 100))}
+                                </p>
+                              </div>
                             </div>
                           )}
 
+                          {/* Limit Warning (Optional Frontend check) */}
+                          {values.amount > getDailyLimit() && (
+                            <p className="text-red-500 text-sm font-medium">
+                              ⚠️ Amount exceeds your daily transfer limit of ₹{getDailyLimit()}.
+                            </p>
+                          )}
+
                           {/* Submit Button */}
-                          <button 
+                          <button
                             type="submit"
-                            disabled={values.amount < 1 || !values.receiverEmail || loading} 
+                            disabled={Number(values.amount) < 1 || !values.receiverEmail || loading || (Number(values.amount) + Math.round(Number(values.amount) * (getFeePercent() / 100)) > (user?.amount || 0))}
                             className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-3 px-4 rounded-lg transition transform hover:scale-105 flex items-center justify-center gap-2"
                           >
                             <RiExchangeDollarFill className='text-lg' />
-                            <span>Send Money</span>
+                            <span>Continue</span>
                           </button>
                         </form>
                       )}
@@ -207,9 +252,18 @@ export default function TransferModal({ id, children, className = "" }) {
                     <div className='space-y-5'>
                       <div className='bg-yellow-50 border border-yellow-200 rounded-lg p-4'>
                         <p className='text-sm font-semibold text-yellow-800 mb-2'>⚠️ Confirm Transfer</p>
-                        <p className='text-gray-700 text-sm'>
-                          You are about to send <span className='font-bold'>₹{transferData?.amount}</span> to <span className='font-bold'>{transferData?.receiverEmail}</span>. This action cannot be undone.
+                        <p className='text-gray-700 text-sm mb-2'>
+                          You are about to send <span className='font-bold'>₹{transferData?.amount}</span> to <span className='font-bold'>{transferData?.receiverEmail}</span>.
                         </p>
+                        {getFeePercent() > 0 && (
+                          <p className='text-gray-600 text-sm'>
+                            A platform fee of <span className='font-bold text-red-500'>₹{Math.round(Number(transferData.amount) * (getFeePercent() / 100))}</span> will be applied.
+                          </p>
+                        )}
+                        <p className='text-gray-900 font-semibold mt-2 pt-2 border-t border-yellow-200'>
+                          Total Expected Deduction: ₹{Number(transferData?.amount) + Math.round(Number(transferData?.amount) * (getFeePercent() / 100))}
+                        </p>
+                        <p className='text-xs text-gray-500 mt-2'>This action cannot be undone.</p>
                       </div>
 
                       <div className='flex gap-3'>

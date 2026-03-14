@@ -473,6 +473,55 @@ class AdminService {
     static async getActivityLogs(page = 1, limit = 50) {
         return await AdminActivityService.getActivityLogs(page, limit);
     }
+
+    static async getSettings() {
+        const { SettingsModel } = require("../models/Settings.model");
+        let settings = await SettingsModel.findOne();
+        if (!settings) {
+            settings = await SettingsModel.create({});
+        }
+        return { settings };
+    }
+
+    static async updateSettings(body, adminId) {
+        const { SettingsModel } = require("../models/Settings.model");
+        let settings = await SettingsModel.findOne();
+        if (!settings) {
+            settings = await SettingsModel.create({});
+        }
+
+        // Deep merge tiers if provided
+        if (body.tiers) {
+            if (body.tiers.saving) {
+                settings.tiers.saving = { ...settings.tiers.saving.toObject(), ...body.tiers.saving };
+            }
+            if (body.tiers.current) {
+                settings.tiers.current = { ...settings.tiers.current.toObject(), ...body.tiers.current };
+            }
+        }
+
+        await settings.save();
+
+        // Build a change string
+        let changeDesc = "Updated global platform settings.";
+        if (body.tiers) {
+            changeDesc += " Changes: " + JSON.stringify(body.tiers).replace(/\"/g, "");
+        }
+
+        const adminDoc = await Usermodel.findById(adminId);
+        await AdminActivityService.logActivity({
+            adminId,
+            action: 'UPDATE_SETTINGS',
+            targetUser: null, // Settings are global, no specific target user
+            description: changeDesc,
+            metadata: { adminName: adminDoc?.name, modifications: body.tiers }
+        });
+
+        return {
+            msg: "Settings updated successfully",
+            settings
+        };
+    }
 }
 
 module.exports = AdminService;

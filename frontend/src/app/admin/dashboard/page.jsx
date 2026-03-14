@@ -145,83 +145,81 @@ const AdminDashboard = () => {
   const userDelta = computeMonthDelta(charts.userGrowth);
 
 
-const StatCard = ({ title, value, icon, link, subtitle, delta }) => {
-  const hasDelta = typeof delta === "number" && !Number.isNaN(delta);
-  const isPositive = hasDelta && delta >= 0;
+  const StatCard = ({ title, value, icon, link, subtitle, delta }) => {
+    const hasDelta = typeof delta === "number" && !Number.isNaN(delta);
+    const isPositive = hasDelta && delta >= 0;
 
-  return (
-    <Link href={link} className="group block">
-      <div
-        className={`rounded-xl bg-white shadow-sm p-5 flex flex-col gap-3 
+    return (
+      <Link href={link} className="group block">
+        <div
+          className={`rounded-xl bg-white shadow-sm p-5 flex flex-col gap-3 
           transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 
           border border-gray-100 h-[160px]`}
-      >
-        {/* Top row: icon + title */}
-        <div className="flex items-center justify-between">
-          <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-widest">
-            {title}
-          </p>
-          <div className="text-xl text-gray-400 group-hover:text-gray-600 transition-colors">
-            {icon}
+        >
+          {/* Top row: icon + title */}
+          <div className="flex items-center justify-between">
+            <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-widest">
+              {title}
+            </p>
+            <div className="text-xl text-gray-400 group-hover:text-gray-600 transition-colors">
+              {icon}
+            </div>
+          </div>
+
+          {/* Value */}
+          <div>
+            <p className="text-2xl font-bold text-gray-900 truncate">{value}</p>
+            {subtitle && (
+              <p className="text-[11px] text-gray-500 mt-0.5 truncate">{subtitle}</p>
+            )}
+          </div>
+
+          {/* Bottom row: delta badge OR fallback, + "View →" */}
+          <div className="flex items-center justify-between mt-auto">
+            {hasDelta ? (
+              <span
+                className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold
+                ${isPositive
+                    ? "bg-emerald-100 text-emerald-700"
+                    : "bg-red-100 text-red-600"
+                  }`}
+              >
+                {isPositive ? "▲" : "▼"}
+                {Math.abs(delta).toFixed(1)}%
+                <span className="font-normal text-gray-500">vs last month</span>
+              </span>
+            ) : (
+              <span></span>
+            )}
+
+            <span className="text-[11px] font-medium text-gray-800 opacity-50 group-hover:opacity-100 transition-opacity">
+              View →
+            </span>
           </div>
         </div>
-
-        {/* Value */}
-        <div>
-          <p className="text-2xl font-bold text-gray-900 truncate">{value}</p>
-          {subtitle && (
-            <p className="text-[11px] text-gray-500 mt-0.5 truncate">{subtitle}</p>
-          )}
-        </div>
-
-        {/* Bottom row: delta badge OR fallback, + "View →" */}
-        <div className="flex items-center justify-between mt-auto">
-          {hasDelta ? (
-            <span
-              className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold
-                ${isPositive
-                  ? "bg-emerald-100 text-emerald-700"
-                  : "bg-red-100 text-red-600"
-                }`}
-            >
-              {isPositive ? "▲" : "▼"}
-              {Math.abs(delta).toFixed(1)}%
-              <span className="font-normal text-gray-500">vs last month</span>
-            </span>
-          ) : (
-            <span></span>
-          )}
-
-          <span className="text-[11px] font-medium text-gray-800 opacity-50 group-hover:opacity-100 transition-opacity">
-            View →
-          </span>
-        </div>
-      </div>
-    </Link>
-  );
-};
+      </Link>
+    );
+  };
 
   const SegmentedToggle = ({ value, onChange }) => (
     <div className="inline-flex rounded-lg border border-gray-200 bg-gray-50 p-0.5">
       <button
         type="button"
         onClick={() => onChange("monthly")}
-        className={`px-2.5 py-1 text-xs font-semibold rounded-md transition ${
-          value === "monthly"
-            ? "bg-white text-gray-900 shadow-sm"
-            : "text-gray-600 hover:text-gray-900"
-        }`}
+        className={`px-2.5 py-1 text-xs font-semibold rounded-md transition ${value === "monthly"
+          ? "bg-white text-gray-900 shadow-sm"
+          : "text-gray-600 hover:text-gray-900"
+          }`}
       >
         Monthly
       </button>
       <button
         type="button"
         onClick={() => onChange("daily")}
-        className={`px-2.5 py-1 text-xs font-semibold rounded-md transition ${
-          value === "daily"
-            ? "bg-white text-gray-900 shadow-sm"
-            : "text-gray-600 hover:text-gray-900"
-        }`}
+        className={`px-2.5 py-1 text-xs font-semibold rounded-md transition ${value === "daily"
+          ? "bg-white text-gray-900 shadow-sm"
+          : "text-gray-600 hover:text-gray-900"
+          }`}
       >
         Daily
       </button>
@@ -272,68 +270,68 @@ const StatCard = ({ title, value, icon, link, subtitle, delta }) => {
       </div>
 
       {/* Action required + Activity log row */}
-<div className="mb-6 flex flex-col lg:flex-row gap-4">
+      <div className="mb-6 flex flex-col lg:flex-row gap-4">
 
-{/* Pending Users */}
-<Link
-  href="/admin/pending-users"
-  className="flex-1 flex items-center justify-between gap-4 rounded-xl border border-amber-200 bg-amber-50 px-5 py-4 hover:bg-amber-100 hover:border-amber-600 transition"
->
-  <div className="flex items-center gap-3">
-    <div className="rounded-lg bg-amber-50 p-2">
-      <FaUsers className="text-amber-600 text-xl" />
-    </div>
-    <div>
-      <h2 className="text-sm font-semibold text-gray-800">Review pending users</h2>
-      <dl className="space-y-1 text-xs text-gray-600 mt-1">
-        <div className="flex gap-3">
-          <dt>Pending approvals</dt>
-          <dd className="font-medium text-gray-900">{pendingUsers} user{pendingUsers === 1 ? "" : "s"}</dd>
-        </div>
-      </dl>
-    </div>
-  </div>
-  <span className="text-sm font-medium text-amber-700 whitespace-nowrap">
-    Go to pending →
-  </span>
-</Link>
+        {/* Pending Users */}
+        <Link
+          href="/admin/pending-users"
+          className="flex-1 flex items-center justify-between gap-4 rounded-xl border border-amber-400 bg-yellow-100 px-5 py-4 hover:bg-amber-100 hover:border-amber-600 transition"
+        >
+          <div className="flex items-center gap-3">
+            <div className="rounded-lg bg-amber-50 p-2">
+              <FaUsers className="text-amber-600 text-xl" />
+            </div>
+            <div>
+              <h2 className="text-sm font-semibold text-gray-800">Review pending users</h2>
+              <dl className="space-y-1 text-xs text-gray-600 mt-1">
+                <div className="flex gap-3">
+                  <dt>Pending approvals</dt>
+                  <dd className="font-medium text-gray-900">{pendingUsers} user{pendingUsers === 1 ? "" : "s"}</dd>
+                </div>
+              </dl>
+            </div>
+          </div>
+          <span className="text-sm font-medium text-amber-700 whitespace-nowrap">
+            Go to pending →
+          </span>
+        </Link>
 
-{/* Activity Log */}
-<Link
-  href="/admin/login-activity"
-  className="flex-1 flex items-center justify-between gap-4 rounded-xl border border-gray-200 bg-white px-5 py-4 hover:bg-gray-50 hover:border-gray-300 transition"
->
-  <div className="flex items-center gap-3">
-    <div className="rounded-lg bg-blue-50 p-2">
-      <FaExchangeAlt className="text-blue-600 text-xl" />
-    </div>
-    <div>
-      <h2 className="text-sm font-semibold text-gray-800">Activity log</h2>
-      <dl className="space-y-1 text-xs text-gray-600 mt-1">
-        <div className="flex gap-3">
-          <dt>Admin last login</dt>
-          <dd className="font-medium text-gray-900">
-            {activity.lastLoginAt
-              ? new Date(activity.lastLoginAt).toLocaleString("en-IN", {
-                  day: "2-digit", month: "short", year: "numeric",
-                  hour: "2-digit", minute: "2-digit",
-                })
-              : "Not available"}
-          </dd>
-        </div>
-        <div className="flex gap-3">
-          <dt>Admin IP</dt>
-          <dd className="font-mono text-[11px] text-gray-900">{activity.lastLoginIp || "Not recorded"}</dd>
-        </div>
-      </dl>
-    </div>
-  </div>
-  <span className="text-[14px] font-medium text-blue-600 whitespace-nowrap">
-    View user logins →
-  </span>
-</Link>
+        {/* Activity Log */}
+        <Link
+          href="/admin/login-activity"
+          className="flex-1 flex items-center justify-between gap-4 rounded-xl border border-gray-200 bg-white px-5 py-4 hover:bg-zinc-50 hover:border-gray-300 transition"
+        >
+          <div className="flex items-center gap-3">
+            <div className="rounded-lg bg-blue-50 p-2">
+              <FaExchangeAlt className="text-blue-600 text-xl" />
+            </div>
+            <div>
+              <h2 className="text-sm font-semibold text-gray-800">Activity log</h2>
+              <dl className="space-y-1 text-xs text-gray-600 mt-1">
+                <div className="flex gap-3">
+                  <dt>Admin last login</dt>
+                  <dd className="font-medium text-gray-900">
+                    {activity.lastLoginAt
+                      ? new Date(activity.lastLoginAt).toLocaleString("en-IN", {
+                        day: "2-digit", month: "short", year: "numeric",
+                        hour: "2-digit", minute: "2-digit",
+                      })
+                      : "Not available"}
+                  </dd>
+                </div>
+                <div className="flex gap-3">
+                  <dt>Admin IP</dt>
+                  <dd className="font-mono text-[11px] text-gray-900">{activity.lastLoginIp || "Not recorded"}</dd>
+                </div>
+              </dl>
+            </div>
+          </div>
+          <span className="text-[14px] font-medium text-blue-600 whitespace-nowrap">
+            View user logins →
+          </span>
+        </Link>
 
-</div>
+      </div>
 
       {/* Stats Grid - clickable, drill-down */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
@@ -348,8 +346,8 @@ const StatCard = ({ title, value, icon, link, subtitle, delta }) => {
         <StatCard
           title="Total Accounts"
           value={stats.totalAccounts}
-           subtitle="All-time accounts"
-           delta={null}
+          subtitle="All-time accounts"
+          delta={null}
           icon={<FaCreditCard />}
           link="/admin/accounts"
         />
@@ -511,7 +509,7 @@ const StatCard = ({ title, value, icon, link, subtitle, delta }) => {
         </div>
       </section>
 
-      
+
     </main>
   );
 };
@@ -519,4 +517,4 @@ const StatCard = ({ title, value, icon, link, subtitle, delta }) => {
 export default AdminDashboard;
 
 
- 
+

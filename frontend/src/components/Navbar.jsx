@@ -3,13 +3,15 @@
 import Link from "next/link";
 import React from "react";
 import Logo from "./reusable/Logo";
+import NavbarSearch from "./NavbarSearch";
 import { useMainContext } from "@/context/MainContext";
 import { usePathname } from "next/navigation";
 import { useDispatch } from "react-redux";
 import { setIsToggled } from "@/redux/slice/sidebarSlice";
 import { Menu, MenuButton, MenuItem, MenuItems, Transition } from "@headlessui/react";
 import { SlMenu } from "react-icons/sl";
-import { Search, User, LogOut, Bell, ChevronDown, ChevronRight } from "lucide-react";
+import { LogOut, ChevronDown, ChevronRight } from "lucide-react";
+import { RiUser5Line, RiShieldUserLine } from "react-icons/ri";
 
 const ADMIN_TABS = [
   { label: "Overview", href: "/admin/dashboard" },
@@ -18,6 +20,7 @@ const ADMIN_TABS = [
   { label: "Accounts", href: "/admin/accounts" },
   { label: "Transactions", href: "/admin/transactions" },
   { label: "Finances", href: "/admin/fds" },
+  { label: "Settings", href: "/admin/settings" },
   { label: "Admin Activity", href: "/admin/activity" },
 ];
 
@@ -65,12 +68,10 @@ function ProfileDropdown({ user, onLogout, isAdmin }) {
     <Menu as="div" className="relative">
       <MenuButton className="flex items-center gap-2 rounded-full focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
         <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-indigo-100 text-indigo-600">
-          {user?.name ? (
-            <span className="text-sm font-semibold">
-              {user.name.charAt(0).toUpperCase()}
-            </span>
+          {isAdmin ? (
+            <RiShieldUserLine className="h-6 w-6" />
           ) : (
-            <User className="h-5 w-5" />
+            <RiUser5Line className="h-6 w-6" />
           )}
         </div>
         <div className="hidden items-center gap-1 sm:flex">
@@ -102,7 +103,7 @@ function ProfileDropdown({ user, onLogout, isAdmin }) {
                   href="/profile"
                   className={`flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 ${focus ? "bg-gray-50" : ""}`}
                 >
-                  <User className="h-4 w-4" />
+                  <RiUser5Line className="h-4 w-4" />
                   Profile
                 </Link>
               )}
@@ -136,8 +137,8 @@ export default function Navbar() {
     pathname.startsWith("/profile");
   const isAdmin = user?.role === "admin" || (typeof window !== "undefined" && localStorage.getItem("role") === "admin");
 
-  const showUserNav = user && isUserArea;
-  const showAdminNav = user && isAdmin && isAdminArea;
+  const showUserNav = isUserArea;
+  const showAdminNav = isAdmin && isAdminArea;
 
   // Auth pages: minimal nav
   if (isAuthPage) {
@@ -213,18 +214,7 @@ export default function Navbar() {
             </div>
 
             <div className="flex flex-1 items-center justify-end gap-2 sm:gap-4">
-              <div className="hidden max-w-xs flex-1 sm:block lg:max-w-sm">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                  <input
-                    type="search"
-                    placeholder="Search..."
-                    className="w-full rounded-lg border border-gray-200 bg-gray-50 py-2 pl-9 pr-3 text-sm text-gray-900 placeholder-gray-500 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                    readOnly
-                    onFocus={(e) => e.target.blur()}
-                  />
-                </div>
-              </div>
+              <NavbarSearch isAdmin={true} />
               <ProfileDropdown
                 user={user}
                 onLogout={LogoutHandler}
@@ -241,7 +231,8 @@ export default function Navbar() {
   if (showUserNav) {
     return (
       <header className="w-full border-b border-gray-200 bg-white shadow-sm">
-        <nav className="mx-auto flex h-14 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6">
+        <div className="mx-auto max-w-[1600px] px-4 sm:px-6">
+        <nav className="flex h-14 items-center justify-between gap-4">
           <div className="flex items-center gap-4 min-w-0">
             <button
               onClick={() => dispatch(setIsToggled())}
@@ -254,25 +245,8 @@ export default function Navbar() {
             <UserBreadcrumbs pathname={pathname} />
           </div>
 
-          <div className="flex items-center gap-3 sm:gap-4">
-            <div className="hidden max-w-[200px] sm:block lg:max-w-[240px]">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                <input
-                  type="search"
-                  placeholder="Search..."
-                  className="w-full rounded-lg border border-gray-200 bg-gray-50 py-2 pl-9 pr-3 text-sm text-gray-900 placeholder-gray-500 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                  readOnly
-                  onFocus={(e) => e.target.blur()}
-                />
-              </div>
-            </div>
-            <button
-              className="relative rounded-lg p-2 text-gray-600 hover:bg-gray-100"
-              aria-label="Notifications"
-            >
-              <Bell className="h-5 w-5" />
-            </button>
+          <div className="flex items-center gap-3 sm:gap-4 flex-1 justify-end">
+            <NavbarSearch isAdmin={false} />
             <ProfileDropdown
               user={user}
               onLogout={LogoutHandler}
@@ -280,6 +254,7 @@ export default function Navbar() {
             />
           </div>
         </nav>
+        </div>
       </header>
     );
   }

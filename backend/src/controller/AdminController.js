@@ -160,6 +160,25 @@ class AdminController {
             throw error;
         }
     }
+
+    static async getSettings(req, res) {
+        try {
+            const res_obj = await AdminService.getSettings();
+            res.status(200).send(res_obj);
+        } catch (error) {
+            throw error;
+        }
+    }
+
+    static async updateSettings(req, res) {
+        try {
+            const adminId = req.user;
+            const res_obj = await AdminService.updateSettings(req.body, adminId);
+            res.status(200).send(res_obj);
+        } catch (error) {
+            throw error;
+        }
+    }
 }
 
 module.exports = AdminController;

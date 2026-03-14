@@ -16,70 +16,70 @@ import { useMainContext } from '@/context/MainContext';
 
 export default function AddAmountModal({ id, children, className = "" }) {
 
-  const {user} = useMainContext()
+  const { user } = useMainContext()
 
   let [isOpen, setIsOpen] = useState(false)
 
-  const [loading,setLoading] = useState(false)
+  const [loading, setLoading] = useState(false)
 
-  const initial_state={
-    amount:0,
-    account_no:id
+  const initial_state = {
+    amount: "",
+    account_no: id
   }
 
   const validationSchema = yup.object({
-    amount:yup.number().min(1, "Amount cannot be empty").required("Amount is required")
+    amount: yup.number().min(1, "Amount cannot be empty").required("Amount is required")
   })
 
-  const onSubmitHandler = async (values, {resetForm}) => {
-    try{
-        setLoading(true)
-            //console.log(values);
-            await loadScript(checkout_url)
+  const onSubmitHandler = async (values, { resetForm }) => {
+    try {
+      setLoading(true)
+      //console.log(values);
+      await loadScript(checkout_url)
 
-            const response = await axiosClient.post('/amount/add-money',values,{
-      headers:{
-        'Authorization':'Bearer '+ localStorage.getItem("token")
-      }
-     })
-     const data = await response.data
-     
-
-            const options = {
-key: `rzp_test_SDpRFBrxzIvRMx`, 
-amount: (values.amount*100).toString(),
-currency: 'INR',
-name: "Credixa Corp.",
-description: "Add Money Transaction",
-callback_url: razorpayCallBackUrl(data.txn_id),
-"image":"https://dashboard-assets.razorpay.com/dashboard/core-bundles/shell/static/standard.6b33a3feedbe5922.svg",
-//image: { logo },
-order_id: data.order_id,
-
-prefill: {
-name: user.name,
-email: user.email,
-contact: "9999999999"
-},
-theme: {
-color: "#61dafb",
-},
-};
+      const response = await axiosClient.post('/amount/add-money', values, {
+        headers: {
+          'Authorization': 'Bearer ' + localStorage.getItem("token")
+        }
+      })
+      const data = await response.data
 
 
+      const options = {
+        key: `rzp_test_SDpRFBrxzIvRMx`,
+        amount: (values.amount * 100).toString(),
+        currency: 'INR',
+        name: "Credixa Corp.",
+        description: "Add Money Transaction",
+        callback_url: razorpayCallBackUrl(data.txn_id),
+        "image": "https://dashboard-assets.razorpay.com/dashboard/core-bundles/shell/static/standard.6b33a3feedbe5922.svg",
+        //image: { logo },
+        order_id: data.order_id,
 
-const paymentObject = new window. Razorpay(options);
-paymentObject. open () ;
+        prefill: {
+          name: user.name,
+          email: user.email,
+          contact: "9999999999"
+        },
+        theme: {
+          color: "#61dafb",
+        },
+      };
 
-           
-           // resetForm()
+
+
+      const paymentObject = new window.Razorpay(options);
+      paymentObject.open();
+
+
+      // resetForm()
 
     } catch (error) {
-    console.error('Payment error:', error);
-    toast.error(error?.response?.data?.msg || error?.message || 'Payment failed. Please try again.');
-        } finally{
-            setLoading(false)
-        }
+      console.error('Payment error:', error);
+      toast.error(error?.response?.data?.msg || error?.message || 'Payment failed. Please try again.');
+    } finally {
+      setLoading(false)
+    }
 
   }
 
@@ -93,15 +93,15 @@ paymentObject. open () ;
 
   return (
     <>
-        {children ? (
-          <button type="button" onClick={openModal} className={className}>
-            {children}
-          </button>
-        ) : (
-          <button type='button' onClick={openModal}>
-            <CiSquarePlus className='text-3xl text-blue-800 cursor-pointer'/>
-          </button>
-        )}
+      {children ? (
+        <button type="button" onClick={openModal} className={className}>
+          {children}
+        </button>
+      ) : (
+        <button type='button' onClick={openModal}>
+          <CiSquarePlus className='text-3xl text-blue-800 cursor-pointer' />
+        </button>
+      )}
 
       <Transition appear show={isOpen} as={Fragment}>
         <Dialog as="div" className="relative z-10" onClose={closeModal}>
@@ -114,11 +114,11 @@ paymentObject. open () ;
             leaveFrom="opacity-100"
             leaveTo="opacity-0"
           >
-            <div className="fixed inset-0 bg-black/25" />
+            <div className="fixed inset-0 bg-black/40 backdrop-blur-sm transition-opacity" />
           </Transition.Child>
 
           <div className="fixed inset-0 overflow-y-auto">
-            <div className="flex min-h-[50vh] items-center justify-center p-4 text-center">
+            <div className="flex min-h-full items-center justify-center p-4 text-center">
               <Transition.Child
                 as={Fragment}
                 enter="ease-out duration-300"
@@ -128,39 +128,59 @@ paymentObject. open () ;
                 leaveFrom="opacity-100 scale-100"
                 leaveTo="opacity-0 scale-95"
               >
-                <Dialog.Panel className="w-full max-w-xl transform overflow-hidden rounded bg-white p-6 text-left align-middle shadow-xl transition-all">
-                  <Dialog.Title
-                    as="h3"
-                    className="text-lg font-medium leading-6 text-gray-900 flex item-center justify-between"
-                  >
-                    <span>
-                        Add Amount
-                    </span>
-                    <button onClick={closeModal} className='text-2xl p-2 bg-blue-100 rounded-full cursor-pointer'>
-                        <IoMdClose/>
+                <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-2xl border border-gray-100 transition-all">
+                  <div className="flex items-center justify-between mb-6">
+                    <Dialog.Title
+                      as="h3"
+                      className="text-xl font-bold text-gray-900"
+                    >
+                      Add Amount
+                    </Dialog.Title>
+                    <button onClick={closeModal} className="text-gray-400 hover:text-gray-600 hover:bg-gray-100 p-2 rounded-full transition-colors outline-none">
+                      <IoMdClose size={24} />
                     </button>
+                  </div>
 
-                  </Dialog.Title>
-                  
-                    <Formik onSubmit={onSubmitHandler} validationSchema={validationSchema} initialValues={initial_state}>
-                    {({values,handleSubmit}) => (
-                        <form onSubmit={handleSubmit} className='w-[50%] lg:w-[50%] mx-auto'>
-                    <div className='mb-3 flex item-center gap-x-2 border rounded w-full px-2 py-2'>
-
-                     <RiMoneyRupeeCircleLine className='text-3xl'/>   
-                     <Field name="amount" onInput={(e) => e.target.value = e.target.value.replace(/[^0-9]/g, '')} type="text" className='w-full text-xl outline-none border-none' placeholder='Enter amount' />
-                    </div>
-                    <div className='mb-3 flex w-full justify-end'>
-                       <button disabled={values.amount<1 || loading} className="px-3 flex items-center gap-x-2 bg-blue-600 hover:bg-blue-700 text-white rounded px-3 py-2 disabled:bg-blue-200"><span>Add</span><SiRazorpay/></button>
-                    </div>
-                    </form>
-
+                  <Formik onSubmit={onSubmitHandler} validationSchema={validationSchema} initialValues={initial_state}>
+                    {({ values, handleSubmit }) => (
+                      <form onSubmit={handleSubmit} className="w-full">
+                        <div className="mb-6">
+                          <label className="block text-sm font-medium text-gray-700 mb-2">Amount to add</label>
+                          <div className="flex items-center gap-x-3 border border-gray-200 rounded-xl w-full px-4 py-3 bg-gray-50 focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500 transition-all">
+                            <RiMoneyRupeeCircleLine className="text-gray-500" size={28} />
+                            <Field
+                              name="amount"
+                              onInput={(e) => e.target.value = e.target.value.replace(/[^0-9]/g, '')}
+                              type="text"
+                              className="w-full text-2xl text-gray-800 outline-none bg-transparent placeholder-gray-300"
+                              placeholder="0"
+                            />
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-end gap-3 w-full border-t border-gray-100 pt-5 mt-2">
+                          <button
+                            type="button"
+                            onClick={closeModal}
+                            className="px-5 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-xl hover:bg-gray-50 transition-colors"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            type="submit"
+                            disabled={values.amount < 1 || loading}
+                            className="flex items-center justify-center gap-x-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-xl px-6 py-2.5 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm hover:shadow active:scale-[0.98] min-w-[140px]"
+                          >
+                            <span>{loading ? "Processing..." : "Proceed"}</span>
+                            {!loading && <SiRazorpay size={16} className="ml-1" />}
+                          </button>
+                        </div>
+                      </form>
                     )}
 
 
-                    </Formik>
+                  </Formik>
 
-                  
+
                 </Dialog.Panel>
               </Transition.Child>
             </div>

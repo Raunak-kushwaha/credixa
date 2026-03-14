@@ -17,10 +17,13 @@ const TableCard = ({id,data:Datas}) => {
         <td className="px-6 py-4  ">
             {Datas.amount}
 </td>
-        <td className="px-6 py-4  ">
-          {moment(Datas.createdAt).format('LL')}
+        <td className="px-6 py-4">
+          {moment(Datas.createdAt).format('ll, LT')}
         </td>
-        <td className={`px-6 py-4 hidden lg:block ${Datas.isSuccess?'bg-green-100  border-gray-100 ':'bg-red-100  border-red-100 '}`}>
+        <td
+          title={Datas.remark}
+          className={`px-4 py-4 hidden max-w-50 truncate lg:table-cell ${Datas.isSuccess?'bg-green-100  border-gray-100 ':'bg-red-100  border-red-100 '}`}
+        >
           {Datas.remark}
         </td>
       </tr>

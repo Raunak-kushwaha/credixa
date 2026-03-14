@@ -63,4 +63,9 @@ router.route("/activity")
 router.route("/login-activity")
     .get(AdminController.getUserLoginActivity);
 
+// Global settings management
+router.route("/settings")
+    .get(AdminController.getSettings)
+    .put(AdminController.updateSettings);
+
 module.exports = router;
